@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulsoFort99 - Pronósticos y Estadísticas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --red: #d32f2f; --dark: #121212; --card: #1e1e1e; --gold: #ffc107; --green: #2e7d32; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: var(--dark); color: #fff; padding: 15px; padding-bottom: 80px; }
+        .container { max-width: 480px; margin: 0 auto; }
+        .header { text-align: center; padding: 15px 0; border-bottom: 2px solid var(--red); margin-bottom: 15px; }
+        .logo-img { max-width: 100%; height: 80px; object-fit: contain; display: block; margin: 0 auto 10px; }
+        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
+        
+        /* Grid de Estadísticas */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 10px; }
+        .stat-box { background: #2a2a2a; padding: 10px; border-radius: 8px; border: 1px solid #444; }
+        .stat-value { font-size: 16px; font-weight: 800; color: var(--gold); }
+        .stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
+
+        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 13px; }
+        input { background: #2a2a2a; color: #fff; border: 1px solid #444; }
+        button { background: var(--red); color: #fff; font-weight: bold; cursor: pointer; }
+        .btn-ws { background: #25d366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 13px; margin-top: 10px; }
+        .blur { filter: blur(6px); opacity: 0.25; user-select: none; }
+        .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
+        .payment-box { background: #262626; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 12px; border-left: 3px solid var(--gold); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <img id="appLogo" src="" alt="PulsoFort99" class="logo-img" style="display:none;">
+        <h2 id="appTitle" style="font-weight:800;">⚡ PULSOFORT<span style="color:var(--red);">99</span></h2>
+        <p style="font-size:11px; color:#aaa;">PRONÓSTICOS DEPORTIVOS Y HÍPICOS VIP</p>
+    </div>
+
+    <!-- MÓDULO DE ESTADÍSTICAS DEL MES -->
+    <div class="card" style="border-top: 3px solid var(--gold);">
+        <h3 style="font-size:13px; color:var(--gold); text-align:center;">📊 EFECTIVIDAD Y ESTADÍSTICAS</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="stWinrate">0%</div>
+                <div class="stat-label">Aciertos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stWins" style="color:#4caf50;">0</div>
+                <div class="stat-label">Ganados</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stLosses" style="color:#f44336;">0</div>
+                <div class="stat-label">Perdidos</div>
+            </div>
+        </div>
+    </div>
+
+    <a id="wsBtn" href="#" target="_blank" class="btn-ws" style="display:none;">💬 Contactar por WhatsApp</a>
+
+    <div class="card" style="margin-top:15px;">
+        <h3 style="font-size:14px; color:var(--gold);">💳 Métodos de Pago Oficiales</h3>
+        <div id="paymentMethodsArea">
+            <p style="font-size:11px; color:#777; margin-top:8px;">Cargando métodos de pago...</p>
+        </div>
+    </div>
+
+    <div class="card" id="authCard">
+        <h3 style="font-size:14px; color:var(--gold);">🔒 Acceso VIP</h3>
+        <input type="text" id="userKey" placeholder="Ingresa tu clave VIP">
+        <button onclick="validarClave()">Entrar a los Pronósticos</button>
+    </div>
+
+    <div class="card" id="welcomeCard" style="display:none; border-color:var(--green);">
+        <p style="color:#4caf50; font-weight:700; font-size:13px;">✔ Sesión VIP Activa</p>
+        <p id="welcomeUser" style="font-size:12px; color:#ccc;"></p>
+    </div>
+
+    <h3 style="font-size:15px; margin-top:20px; margin-bottom:10px;">🔥 Jugadas y Pronósticos de Hoy</h3>
+    <div id="postsArea">
+        <p style="font-size:12px; color:#777;">Cargando información...</p>
+    </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script>
+    let esVIP = false;
+
+    // Cargar Estadísticas en Tiempo Real
+    db.collection("configuracion").doc("estadisticas").onSnapshot((doc) => {
+        if(doc.exists) {
+            const data = doc.data();
+            document.getElementById('stWinrate').innerText = (data.winrate || '0') + '%';
+            document.getElementById('stWins').innerText = data.ganados || '0';
+            document.getElementById('stLosses').innerText = data.perdidos || '0';
+        }
+    });
+
+    db.collection("configuracion").doc("general").onSnapshot((doc) => {
+        if(doc.exists) {
+            const data = doc.data();
+            if(data.logoUrl) {
+                const img = document.getElementById('appLogo');
+                img.src = data.logoUrl;
+                img.style.display = 'block';
+            }
+            if(data.whatsapp) {
+                const ws = document.getElementById('wsBtn');
+                ws.href = `https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}?text=Hola%20PulsoFort99,%20quiero%20solicitar%20mi%20acceso%20VIP`;
+                ws.style.display = 'flex';
+            }
+        }
+    });
+
+    db.collection("configuracion").doc("pagos").onSnapshot((doc) => {
+        const area = document.getElementById('paymentMethodsArea');
+        if(doc.exists && Object.keys(doc.data()).length > 0) {
+            const data = doc.data();
+            area.innerHTML = `
+                ${data.pagoMovil ? `<div class="payment-box"><b>📲 Pago Móvil:</b><br>${data.pagoMovil.replace(/\n/g, '<br>')}</div>` : ''}
+                ${data.binance ? `<div class="payment-box"><b>🟡 Binance Pay:</b><br>${data.binance.replace(/\n/g, '<br>')}</div>` : ''}
+                ${data.otros ? `<div class="payment-box"><b>💵 Otros Métodos:</b><br>${data.otros.replace(/\n/g, '<br>')}</div>` : ''}
+            `;
+        } else {
+            area.innerHTML = '<p style="font-size:11px; color:#777; margin-top:8px;">No hay métodos de pago configurados aún.</p>';
+        }
+    });
+
+    function validarClave() {
+        const clave = document.getElementById('userKey').value.trim().toUpperCase();
+        if(!clave) return alert("Por favor ingresa tu clave.");
+
+        db.collection("claves").doc(clave).get().then((doc) => {
+            if (doc.exists && doc.data().activa) {
+                esVIP = true;
+                document.getElementById('authCard').style.display = 'none';
+                document.getElementById('welcomeCard').style.display = 'block';
+                document.getElementById('welcomeUser').innerText = "Cliente VIP: " + doc.data().cliente;
+                cargarPronosticos();
+            } else {
+                alert("❌ Clave inválida o desactivada.");
+            }
+        });
+    }
+
+    function cargarPronosticos() {
+        db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+            const area = document.getElementById('postsArea');
+            area.innerHTML = '';
+            
+            if (snapshot.empty) {
+                area.innerHTML = '<p style="font-size:12px; color:#777;">No hay pronósticos publicados por hoy.</p>';
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                area.innerHTML += `
+                    <div class="card" style="border-left: 3px solid ${esVIP ? 'var(--green)' : 'var(--red)'}">
+                        <span class="tag">${item.categoria || 'VIP'}</span>
+                        <h4 style="margin:6px 0; font-size:14px;">${item.titulo}</h4>
+                        <p class="${esVIP ? '' : 'blur'}" style="font-size:12px; white-space: pre-line;">${item.detalles}</p>
+                        ${!esVIP ? '<p style="font-size:10px; color:var(--gold); margin-top:6px;">🔒 Ingresa tu clave VIP para desbloquear.</p>' : ''}
+                    </div>
+                `;
+            });
+        });
+    }
+
+    cargarPronosticos();
+</script>
+</body>
+</html>
