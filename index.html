@@ -12,35 +12,69 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         body { background: var(--dark); color: #fff; padding: 15px; padding-bottom: 80px; }
         .container { max-width: 480px; margin: 0 auto; }
-        .header { text-align: center; padding: 15px 0; border-bottom: 2px solid var(--red); margin-bottom: 15px; }
+        .header { text-align: center; padding: 15px 0 10px; border-bottom: 2px solid var(--red); margin-bottom: 10px; }
         .logo-img { max-width: 100%; height: 80px; object-fit: contain; display: block; margin: 0 auto 10px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
         input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 13px; }
         input { background: #2a2a2a; color: #fff; border: 1px solid #444; }
         button { background: var(--red); color: #fff; font-weight: bold; cursor: pointer; }
-        .btn-ws { background: #25d366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 13px; margin-top: 10px; }
+        .btn-ws { background: #25d366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 13px; margin-bottom: 15px; }
         .blur { filter: blur(6px); opacity: 0.25; user-select: none; }
         .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
         .payment-box { background: #262626; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 12px; border-left: 3px solid var(--gold); }
+
+        /* Métrica de Aciertos */
+        .stats-box { display: flex; justify-content: space-around; background: #181818; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; text-align: center; }
+        .stat-item { font-size: 11px; color: #aaa; }
+        .stat-val { font-size: 15px; font-weight: bold; color: #fff; display: block; }
+
+        /* Categorías Horizontales */
+        .cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; scrollbar-width: none; }
+        .cat-scroll::-webkit-scrollbar { display: none; }
+        .cat-btn { background: #2a2a2a; color: #ccc; border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-size: 11px; white-space: nowrap; cursor: pointer; width: auto; margin: 0; }
+        .cat-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: bold; }
+
+        /* Badges Win / Lose */
+        .status-badge { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
+        .bg-win { background: var(--green); color: #fff; }
+        .bg-lose { background: #b71c1c; color: #fff; }
+        .bg-pending { background: #ff9800; color: #000; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- 1. LOGO Y HEADER -->
     <div class="header">
         <img id="appLogo" src="" alt="PulsoFort99" class="logo-img" style="display:none;">
         <h2 id="appTitle" style="font-weight:800;">⚡ PULSOFORT<span style="color:var(--red);">99</span></h2>
         <p style="font-size:11px; color:#aaa;">PRONÓSTICOS DEPORTIVOS Y HÍPICOS VIP</p>
     </div>
 
-    <a id="wsBtn" href="#" target="_blank" class="btn-ws" style="display:none;">💬 Contactar por WhatsApp</a>
-
-    <div class="card" style="margin-top:15px;">
-        <h3 style="font-size:14px; color:var(--gold);">💳 Métodos de Pago Oficiales</h3>
-        <div id="paymentMethodsArea">
-            <p style="font-size:11px; color:#777; margin-top:8px;">Cargando métodos de pago...</p>
-        </div>
+    <!-- 2. MÉTRICAS DE ACIERTOS REALES -->
+    <div class="stats-box">
+        <div class="stat-item">Efectividad<span id="rateVal" class="stat-val" style="color:var(--gold);">0%</span></div>
+        <div class="stat-item">Verdes (WIN)<span id="winVal" class="stat-val" style="color:#4caf50;">0</span></div>
+        <div class="stat-item">Rojos (LOSE)<span id="loseVal" class="stat-val" style="color:#f44336;">0</span></div>
     </div>
+
+    <!-- 3. CATEGORÍAS HORIZONTALES -->
+    <div class="cat-scroll">
+        <button class="cat-btn active" onclick="filtrarCat('TODOS', this)">TODOS</button>
+        <button class="cat-btn" onclick="filtrarCat('CARRERAS DE CABALLOS', this)">🐎 CABALLOS</button>
+        <button class="cat-btn" onclick="filtrarCat('MLB', this)">⚾ MLB</button>
+        <button class="cat-btn" onclick="filtrarCat('NBA', this)">🏀 NBA</button>
+        <button class="cat-btn" onclick="filtrarCat('NFL', this)">🏈 NFL</button>
+        <button class="cat-btn" onclick="filtrarCat('FUTBOL', this)">⚽ FÚTBOL</button>
+    </div>
+
+    <!-- 4. ÁREA DE PRONÓSTICOS (AHORA ARRIBA) -->
+    <div id="postsArea">
+        <p style="font-size:12px; color:#777;">Cargando información...</p>
+    </div>
+
+    <!-- 5. CONTACTO, ACCESO VIP Y PAGO (ABAJO) -->
+    <a id="wsBtn" href="#" target="_blank" class="btn-ws" style="display:none;">💬 Contactar por WhatsApp</a>
 
     <div class="card" id="authCard">
         <h3 style="font-size:14px; color:var(--gold);">🔒 Acceso VIP</h3>
@@ -53,16 +87,21 @@
         <p id="welcomeUser" style="font-size:12px; color:#ccc;"></p>
     </div>
 
-    <h3 style="font-size:15px; margin-top:20px; margin-bottom:10px;">🔥 Jugadas y Pronósticos de Hoy</h3>
-    <div id="postsArea">
-        <p style="font-size:12px; color:#777;">Cargando información...</p>
+    <div class="card">
+        <h3 style="font-size:14px; color:var(--gold);">💳 Métodos de Pago Oficiales</h3>
+        <div id="paymentMethodsArea">
+            <p style="font-size:11px; color:#777; margin-top:8px;">Cargando métodos de pago...</p>
+        </div>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
     let esVIP = false;
+    let todosLosPronosticos = [];
+    let categoriaActual = 'TODOS';
 
+    // Cargar Configuración de Marca y WhatsApp
     db.collection("configuracion").doc("general").onSnapshot((doc) => {
         if(doc.exists) {
             const data = doc.data();
@@ -79,6 +118,7 @@
         }
     });
 
+    // Cargar Métodos de Pago
     db.collection("configuracion").doc("pagos").onSnapshot((doc) => {
         const area = document.getElementById('paymentMethodsArea');
         if(doc.exists && Object.keys(doc.data()).length > 0) {
@@ -93,6 +133,7 @@
         }
     });
 
+    // Validar Clave VIP
     function validarClave() {
         const clave = document.getElementById('userKey').value.trim().toUpperCase();
         if(!clave) return alert("Por favor ingresa tu clave.");
@@ -103,38 +144,84 @@
                 document.getElementById('authCard').style.display = 'none';
                 document.getElementById('welcomeCard').style.display = 'block';
                 document.getElementById('welcomeUser').innerText = "Cliente VIP: " + doc.data().cliente;
-                cargarPronosticos();
+                renderizarPronosticos();
             } else {
                 alert("❌ Clave inválida o desactivada.");
             }
         });
     }
 
-    function cargarPronosticos() {
+    // Escuchar Pronósticos y Calcular Métricas en Tiempo Real
+    function suscribirPronosticos() {
         db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-            const area = document.getElementById('postsArea');
-            area.innerHTML = '';
-            
-            if (snapshot.empty) {
-                area.innerHTML = '<p style="font-size:12px; color:#777;">No hay pronósticos publicados por hoy.</p>';
-                return;
-            }
+            todosLosPronosticos = [];
+            let wins = 0;
+            let loses = 0;
 
             snapshot.forEach((doc) => {
                 const item = doc.data();
-                area.innerHTML += `
-                    <div class="card" style="border-left: 3px solid ${esVIP ? 'var(--green)' : 'var(--red)'}">
-                        <span class="tag">${item.categoria || 'VIP'}</span>
-                        <h4 style="margin:6px 0; font-size:14px;">${item.titulo}</h4>
-                        <p class="${esVIP ? '' : 'blur'}" style="font-size:12px; white-space: pre-line;">${item.detalles}</p>
-                        ${!esVIP ? '<p style="font-size:10px; color:var(--gold); margin-top:6px;">🔒 Ingresa tu clave VIP para desbloquear.</p>' : ''}
-                    </div>
-                `;
+                todosLosPronosticos.push(item);
+
+                // Calcular Estadísticas de Acierto
+                if(item.estatus === 'win') wins++;
+                if(item.estatus === 'lose') loses++;
             });
+
+            // Actualizar Marcador (%)
+            const totalResueltos = wins + loses;
+            const efectividad = totalResueltos > 0 ? ((wins / totalResueltos) * 100).toFixed(1) : 0;
+            
+            document.getElementById('winVal').innerText = wins;
+            document.getElementById('loseVal').innerText = loses;
+            document.getElementById('rateVal').innerText = `${efectividad}%`;
+
+            renderizarPronosticos();
         });
     }
 
-    cargarPronosticos();
+    // Filtrar por Categoría
+    function filtrarCat(cat, btn) {
+        categoriaActual = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderizarPronosticos();
+    }
+
+    // Dibujar Tarjetas en Pantalla
+    function renderizarPronosticos() {
+        const area = document.getElementById('postsArea');
+        area.innerHTML = '';
+
+        const filtrados = categoriaActual === 'TODOS' 
+            ? todosLosPronosticos 
+            : todosLosPronosticos.filter(p => (p.categoria || '').toUpperCase() === categoriaActual);
+
+        if (filtrados.length === 0) {
+            area.innerHTML = '<p style="font-size:12px; color:#777; text-align:center; padding:10px;">No hay publicaciones en esta categoría.</p>';
+            return;
+        }
+
+        filtrados.forEach((item) => {
+            let badgeClass = 'bg-pending';
+            let badgeText = 'PENDIENTE';
+            
+            if(item.estatus === 'win') { badgeClass = 'bg-win'; badgeText = 'WIN 🟢'; }
+            if(item.estatus === 'lose') { badgeClass = 'bg-lose'; badgeText = 'LOSE 🔴'; }
+
+            area.innerHTML += `
+                <div class="card" style="border-left: 3px solid ${esVIP ? 'var(--green)' : 'var(--red)'}">
+                    <span class="tag">${item.categoria || 'VIP'}</span>
+                    <span class="status-badge ${badgeClass}">${badgeText}</span>
+                    <h4 style="margin:8px 0 6px; font-size:14px;">${item.titulo}</h4>
+                    <p class="${esVIP ? '' : 'blur'}" style="font-size:12px; white-space: pre-line;">${item.detalles}</p>
+                    ${!esVIP ? '<p style="font-size:10px; color:var(--gold); margin-top:6px;">🔒 Ingresa tu clave VIP para desbloquear.</p>' : ''}
+                </div>
+            `;
+        });
+    }
+
+    // Inicializar lectura de Firebase
+    suscribirPronosticos();
 </script>
 </body>
 </html>
