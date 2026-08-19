@@ -2,55 +2,76 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>PulsoFort99 | Analytics</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulsoFort99</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <style>
-        body { background: #0A0A0A; color: #F5F5F5; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
+        body { background: #121212; color: #fff; font-family: 'Poppins', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 480px; margin: auto; }
-        #logoArea img { max-width: 120px; display: block; margin: 0 auto 30px; border-radius: 4px; }
-        .stats-box { display: flex; justify-content: space-between; background: #121212; padding: 25px; border-radius: 4px; border: 1px solid #D4AF37; margin-bottom: 20px; }
-        .stat { text-align: center; }
-        .stat span { display: block; font-size: 24px; font-weight: 800; color: #D4AF37; }
-        .stat small { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .post-card { background: #121212; padding: 20px; border-radius: 4px; margin-bottom: 15px; border-left: 2px solid #D4AF37; border-bottom: 1px solid #1E1E1E; }
-        .badge { font-size: 9px; padding: 3px 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        #logoContainer { text-align: center; margin-bottom: 20px; }
+        .logo-main { max-width: 150px; height: auto; border-radius: 12px; display: inline-block; }
+
+        .cat-box { background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; text-align: center; }
+        
+        /* Estilo para el QR de WhatsApp limpio */
+        .qr-container { width: 160px; height: 160px; overflow: hidden; margin: 10px auto; border: 3px solid #ffc107; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; }
+        .qr-img { width: 150px; height: 150px; object-fit: contain; }
+
+        h2 { color: #ffc107; font-size: 15px; border-left: 4px solid #ffc107; padding-left: 10px; margin-top: 25px; text-transform: uppercase; }
+        .post-card { background: #1e1e1e; padding: 15px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div id="logoArea"></div>
-    <div class="stats-box">
-        <div class="stat"><span id="efectividad">0%</span><small>Efectividad</small></div>
-        <div class="stat"><span id="aciertos">0</span><small>Aciertos</small></div>
-        <div class="stat"><span id="fallos">0</span><small>Fallos</small></div>
+    <!-- Logo Dinámico de la Pantalla Principal -->
+    <div id="logoContainer"></div>
+
+    <!-- Sección de Código QR de WhatsApp -->
+    <div class="cat-box">
+        <h3 style="margin:0 0 5px 0; color:#ffc107; font-size:13px;">CONTACTO VIP WHATSAPP</h3>
+        <div class="qr-container">
+            <img src="https://i.postimg.cc/pVsx2bBr/IMG-20250608-151525.jpg" class="qr-img" alt="QR WhatsApp">
+        </div>
+        <p style="font-size:11px; color:#aaa; margin:5px 0 0 0;">Escanea el código para chatear directamente</p>
     </div>
-    <div id="postsArea"></div>
+
+    <h2>HIPISMO</h2>
+    <div id="hipismoArea"></div>
+
+    <h2>DEPORTES</h2>
+    <div id="deportesArea"></div>
 </div>
+
 <script src="firebase-config.js"></script>
 <script>
+    // Cargar la configuración general (Logo) desde Firebase
     db.collection("configuracion").doc("general").onSnapshot(doc => {
-        if(doc.data()?.logoUrl) document.getElementById('logoArea').innerHTML = `<img src="${doc.data().logoUrl}">`;
+        if(doc.exists && doc.data().logoUrl) {
+            document.getElementById('logoContainer').innerHTML = `<img src="${doc.data().logoUrl}" class="logo-main" alt="Logo PulsoFort99">`;
+        } else {
+            document.getElementById('logoContainer').innerHTML = `<h1 style="color:#ffc107; font-size:22px; margin:0;">PulsoFort99</h1>`;
+        }
     });
-    db.collection("pronosticos").onSnapshot(snap => {
-        let g = 0, p = 0, html = '';
+
+    // Cargar pronósticos en tiempo real y separarlos correctamente
+    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot(snap => {
+        let h = '', d = '';
         snap.forEach(doc => {
-            let d = doc.data();
-            if(d.resultado === 'ganador') g++;
-            if(d.resultado === 'perdedor') p++;
-            html += `<div class="post-card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span style="font-size:10px; color:#D4AF37;">${d.categoria}</span>
-                <span class="badge" style="color:${d.resultado=='ganador'?'#15803d':'#991b1b'}">${d.resultado}</span></div>
-                <b style="font-size:15px; display:block; margin-bottom:5px;">${d.titulo}</b>
-                <p style="font-size:12px; color:#888; margin:0;">${d.detalles}</p>
-            </div>`;
+            let item = doc.data();
+            let card = `<div class="post-card"><b style="color:#ffc107; font-size:13px; display:block; margin-bottom:4px;">${item.titulo}</b><span style="color:#ccc;">${item.detalles}</span></div>`;
+            
+            if(item.categoria && item.categoria.toLowerCase() === 'hipismo') {
+                h += card;
+            } else {
+                d += card;
+            }
         });
-        document.getElementById('efectividad').innerText = (g+p)>0 ? Math.round(g/(g+p)*100) + '%' : '0%';
-        document.getElementById('aciertos').innerText = g;
-        document.getElementById('fallos').innerText = p;
-        document.getElementById('postsArea').innerHTML = html;
+        
+        document.getElementById('hipismoArea').innerHTML = h || '<p style="font-size:12px; color:#666;">No hay pronósticos de hipismo.</p>';
+        document.getElementById('deportesArea').innerHTML = d || '<p style="font-size:12px; color:#666;">No hay pronósticos de deportes.</p>';
     });
 </script>
 </body>
