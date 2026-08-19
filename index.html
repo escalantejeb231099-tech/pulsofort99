@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PulsoFort99 - Pronósticos Deportivos e Hipismo</title>
     
-    <!-- Iconos para Pantalla de Inicio -->
     <link rel="apple-touch-icon" href="https://i.postimg.cc/pVsx2bBr/IMG-20250608-151525.jpg">
     <link rel="icon" href="https://i.postimg.cc/pVsx2bBr/IMG-20250608-151525.jpg" type="image/jpeg">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,20 +28,18 @@
         .btn-ws { background: #25d366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 13px; margin-bottom: 15px; }
         .blur { filter: blur(6px); opacity: 0.25; user-select: none; }
         .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
+        .type-tag { background: #333; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; margin-left: 5px; }
         .payment-box { background: #262626; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 12px; border-left: 3px solid var(--gold); }
 
-        /* Métrica de Aciertos */
         .stats-box { display: flex; justify-content: space-around; background: #181818; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; text-align: center; }
         .stat-item { font-size: 11px; color: #aaa; }
         .stat-val { font-size: 15px; font-weight: bold; color: #fff; display: block; }
 
-        /* Categorías Horizontales */
         .cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; scrollbar-width: none; }
         .cat-scroll::-webkit-scrollbar { display: none; }
         .cat-btn { background: #2a2a2a; color: #ccc; border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-size: 11px; white-space: nowrap; cursor: pointer; width: auto; margin: 0; }
         .cat-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: bold; }
 
-        /* Badges Win / Lose */
         .status-badge { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
         .bg-win { background: var(--green); color: #fff; }
         .bg-lose { background: #b71c1c; color: #fff; }
@@ -207,6 +204,7 @@
             area.innerHTML += `
                 <div class="card" style="border-left: 3px solid ${esVIP ? 'var(--green)' : 'var(--red)'}">
                     <span class="tag">${item.categoria || 'VIP'}</span>
+                    <span class="type-tag">${item.tipo || 'DIRECTA'}</span>
                     <span class="status-badge ${badgeClass}">${badgeText}</span>
                     <h4 style="margin:8px 0 6px; font-size:14px;">${item.titulo}</h4>
                     <p class="${esVIP ? '' : 'blur'}" style="font-size:12px; white-space: pre-line;">${item.detalles}</p>
