@@ -23,12 +23,6 @@
         .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
         .payment-box { background: #262626; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 12px; border-left: 3px solid var(--gold); }
 
-        /* Estilos para los Códigos QR integrados */
-        .qr-grid { display: flex; gap: 10px; justify-content: space-between; margin-top: 10px; }
-        .qr-item { flex: 1; background: #262626; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333; }
-        .qr-container { width: 100%; height: 130px; background: #fff; border-radius: 6px; padding: 4px; margin-top: 6px; display: flex; align-items: center; justify-content: center; }
-        .qr-img-code { width: 100%; height: 100%; object-fit: contain; }
-
         /* Métrica de Aciertos */
         .stats-box { display: flex; justify-content: space-around; background: #181818; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; text-align: center; }
         .stat-item { font-size: 11px; color: #aaa; }
@@ -50,21 +44,18 @@
 <body>
 
 <div class="container">
-    <!-- 1. LOGO Y HEADER -->
     <div class="header">
         <img id="appLogo" src="" alt="PulsoFort99" class="logo-img" style="display:none;">
         <h2 id="appTitle" style="font-weight:800;">⚡ PULSOFORT<span style="color:var(--red);">99</span></h2>
         <p style="font-size:11px; color:#aaa;">PRONÓSTICOS DEPORTIVOS Y HÍPICOS VIP</p>
     </div>
 
-    <!-- 2. MÉTRICAS DE ACIERTOS REALES -->
     <div class="stats-box">
         <div class="stat-item">Efectividad<span id="rateVal" class="stat-val" style="color:var(--gold);">0%</span></div>
         <div class="stat-item">Verdes (WIN)<span id="winVal" class="stat-val" style="color:#4caf50;">0</span></div>
         <div class="stat-item">Rojos (LOSE)<span id="loseVal" class="stat-val" style="color:#f44336;">0</span></div>
     </div>
 
-    <!-- 3. CATEGORÍAS HORIZONTALES -->
     <div class="cat-scroll">
         <button class="cat-btn active" onclick="filtrarCat('TODOS', this)">TODOS</button>
         <button class="cat-btn" onclick="filtrarCat('CARRERAS DE CABALLOS', this)">🐎 CABALLOS</button>
@@ -74,12 +65,10 @@
         <button class="cat-btn" onclick="filtrarCat('FUTBOL', this)">⚽ FÚTBOL</button>
     </div>
 
-    <!-- 4. ÁREA DE PRONÓSTICOS -->
     <div id="postsArea">
         <p style="font-size:12px; color:#777;">Cargando información...</p>
     </div>
 
-    <!-- 5. CONTACTO, ACCESO VIP Y PAGO -->
     <a id="wsBtn" href="#" target="_blank" class="btn-ws" style="display:none;">💬 Contactar por WhatsApp</a>
 
     <div class="card" id="authCard">
@@ -93,32 +82,13 @@
         <p id="welcomeUser" style="font-size:12px; color:#ccc;"></p>
     </div>
 
-    <!-- SECCIÓN DE CÓDIGOS QR Y MÉTODOS DE PAGO -->
     <div class="card">
         <h3 style="font-size:14px; color:var(--gold);">💳 Métodos de Pago Oficiales</h3>
-        
-        <!-- Aquí añadí de forma limpia y ordenada los dos QR en paralelo -->
-        <div class="qr-grid">
-            <div class="qr-item">
-                <span style="font-size:10px; color:#aaa; font-weight:bold;">QR WHATSAPP</span>
-                <div class="qr-container">
-                    <img src="https://i.postimg.cc/pVsx2bBr/IMG-20250608-151525.jpg" class="qr-img-code" alt="QR WhatsApp">
-                </div>
-            </div>
-            <div class="qr-item">
-                <span style="font-size:10px; color:#aaa; font-weight:bold;">QR PAGO MÓVIL</span>
-                <div class="qr-container">
-                    <img src="https://i.postimg.cc/k47vB4n1/image.png" class="qr-img-code" alt="QR Banco Provincial">
-                </div>
-            </div>
-        </div>
-
-        <div id="paymentMethodsArea" style="margin-top: 10px;">
+        <div id="paymentMethodsArea">
             <p style="font-size:11px; color:#777; margin-top:8px;">Cargando métodos de pago...</p>
         </div>
     </div>
 
-    <!-- 6. PIE DE PÁGINA / AVISO LEGAL Y DESCARGO DE RESPONSABILIDAD -->
     <div style="margin-top: 30px; padding: 15px; border-top: 1px solid #333; text-align: center; color: #777; font-size: 10px; line-height: 1.5;">
         <p style="color: var(--gold); font-weight: bold; margin-bottom: 5px;">⚠️ AVISO LEGAL Y JUEGO RESPONSABLE</p>
         <p>PulsoFort99 proporciona análisis técnico e información deportiva con fines puramente informativos y de entretenimiento. No somos una casa de apuestas ni gestionamos capital de terceros. No garantizamos resultados ni asumimos responsabilidad por las decisiones financieras, pérdidas o ganancias de los usuarios. Cada persona es 100% responsable de la gestión de su dinero. Juegue con moderación y dentro de sus límites. Servicio exclusivo para mayores de edad (+18).</p>
@@ -132,7 +102,6 @@
     let todosLosPronosticos = [];
     let categoriaActual = 'TODOS';
 
-    // Cargar Configuración de Marca y WhatsApp
     db.collection("configuracion").doc("general").onSnapshot((doc) => {
         if(doc.exists) {
             const data = doc.data();
@@ -149,7 +118,6 @@
         }
     });
 
-    // Cargar Métodos de Pago
     db.collection("configuracion").doc("pagos").onSnapshot((doc) => {
         const area = document.getElementById('paymentMethodsArea');
         if(doc.exists && Object.keys(doc.data()).length > 0) {
@@ -164,7 +132,6 @@
         }
     });
 
-    // Validar Clave VIP
     function validarClave() {
         const clave = document.getElementById('userKey').value.trim().toUpperCase();
         if(!clave) return alert("Por favor ingresa tu clave.");
@@ -182,7 +149,6 @@
         });
     }
 
-    // Escuchar Pronósticos y Calcular Métricas en Tiempo Real
     function suscribirPronosticos() {
         db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
             todosLosPronosticos = [];
@@ -192,13 +158,10 @@
             snapshot.forEach((doc) => {
                 const item = doc.data();
                 todosLosPronosticos.push(item);
-
-                // Calcular Estadísticas de Acierto
                 if(item.estatus === 'win') wins++;
                 if(item.estatus === 'lose') loses++;
             });
 
-            // Actualizar Marcador (%)
             const totalResueltos = wins + loses;
             const efectividad = totalResueltos > 0 ? ((wins / totalResueltos) * 100).toFixed(1) : 0;
             
@@ -210,7 +173,6 @@
         });
     }
 
-    // Filtrar por Categoría
     function filtrarCat(cat, btn) {
         categoriaActual = cat;
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -218,14 +180,10 @@
         renderizarPronosticos();
     }
 
-    // Dibujar Tarjetas en Pantalla
     function renderizarPronosticos() {
         const area = document.getElementById('postsArea');
         area.innerHTML = '';
-
-        const filtrados = categoriaActual === 'TODOS' 
-            ? todosLosPronosticos 
-            : todosLosPronosticos.filter(p => (p.categoria || '').toUpperCase() === categoriaActual);
+        const filtrados = categoriaActual === 'TODOS' ? todosLosPronosticos : todosLosPronosticos.filter(p => (p.categoria || '').toUpperCase() === categoriaActual);
 
         if (filtrados.length === 0) {
             area.innerHTML = '<p style="font-size:12px; color:#777; text-align:center; padding:10px;">No hay publicaciones en esta categoría.</p>';
@@ -235,7 +193,6 @@
         filtrados.forEach((item) => {
             let badgeClass = 'bg-pending';
             let badgeText = 'PENDIENTE';
-            
             if(item.estatus === 'win') { badgeClass = 'bg-win'; badgeText = 'WIN 🟢'; }
             if(item.estatus === 'lose') { badgeClass = 'bg-lose'; badgeText = 'LOSE 🔴'; }
 
@@ -251,7 +208,6 @@
         });
     }
 
-    // Inicializar lectura de Firebase
     suscribirPronosticos();
 </script>
 </body>
