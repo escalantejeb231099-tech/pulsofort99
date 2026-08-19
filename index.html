@@ -3,214 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PulsoFort99 - Admin</title>
+    <title>PulsoFort99 - Pronósticos</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <style>
-        body { background: #121212; color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; }
+        :root { --red: #d32f2f; --dark: #121212; --card: #1e1e1e; --gold: #ffc107; --green: #2e7d32; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: var(--dark); color: #fff; padding: 15px; padding-bottom: 80px; }
         .container { max-width: 480px; margin: 0 auto; }
-        .card { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h3 { font-size: 14px; color: #ffc107; margin-bottom: 10px; }
-        input, select, textarea, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
-        input:focus, select:focus, textarea:focus { border-color: #ffc107; outline: none; box-shadow: 0 0 8px rgba(255, 193, 7, 0.2); }
-        button { background: #d32f2f; color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
-        .btn-green { background: #2e7d32; }
-        .btn-danger { background: #b71c1c; padding: 6px 10px; font-size: 11px; margin-top: 5px; width: auto; }
-        .admin-item { background: #252525; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .header { text-align: center; padding: 15px 0; border-bottom: 2px solid var(--red); margin-bottom: 15px; }
+        .logo-img { max-width: 100%; height: 80px; object-fit: contain; display: block; margin: 0 auto 10px; }
+        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
+        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 13px; }
+        input { background: #2a2a2a; color: #fff; border: 1px solid #444; }
+        button { background: var(--red); color: #fff; font-weight: bold; cursor: pointer; }
+        .btn-ws { background: #25d366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 13px; margin-top: 10px; }
+        .blur { filter: blur(6px); opacity: 0.25; user-select: none; }
+        .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
+        .payment-box { background: #262626; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 12px; border-left: 3px solid var(--gold); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="background:#d32f2f; color:white; text-align:center; padding:12px; border-radius:8px; margin-bottom:15px;">
-        <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
+    <div class="header">
+        <img id="appLogo" src="" alt="PulsoFort99" class="logo-img" style="display:none;">
+        <h2 id="appTitle" style="font-weight:800;">⚡ PULSOFORT<span style="color:var(--red);">99</span></h2>
+        <p style="font-size:11px; color:#aaa;">PRONÓSTICOS DEPORTIVOS Y HÍPICOS VIP</p>
     </div>
 
-    <div class="card">
-        <h3>🖼️ Configurar Logo y WhatsApp</h3>
-        <label style="font-size:11px;">URL del Logo:</label>
-        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
-        <label style="font-size:11px;">Número de WhatsApp:</label>
-        <input type="text" id="wsNum" placeholder="+584121234567">
-        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
-    </div>
+    <a id="wsBtn" href="#" target="_blank" class="btn-ws" style="display:none;">💬 Contactar por WhatsApp</a>
 
-    <div class="card">
-        <h3>💳 Configurar Métodos de Pago</h3>
-        <label style="font-size:11px;">Pago Móvil:</label>
-        <textarea id="pmData" rows="3" placeholder="Banco, Cédula, Teléfono..."></textarea>
-        <label style="font-size:11px;">Binance Pay:</label>
-        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
-        <label style="font-size:11px;">Otros Métodos:</label>
-        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
-        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
-    </div>
-
-    <div class="card">
-        <h3>🔑 Activar Clave VIP</h3>
-        <input type="text" id="clientName" placeholder="Nombre del Cliente">
-        <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
-        <button class="btn-green" onclick="guardarClave()">Activar Clave VIP</button>
-    </div>
-
-    <!-- GESTIÓN DE USUARIOS VIP -->
-    <div class="card">
-        <h3>👥 Usuarios y Claves Activas</h3>
-        <div id="usersListArea">
-            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
+    <div class="card" style="margin-top:15px;">
+        <h3 style="font-size:14px; color:var(--gold);">💳 Métodos de Pago Oficiales</h3>
+        <div id="paymentMethodsArea">
+            <p style="font-size:11px; color:#777; margin-top:8px;">Cargando métodos de pago...</p>
         </div>
     </div>
 
-    <div class="card">
-        <h3>🚀 Publicar Pronóstico</h3>
-        
-        <!-- SELECTOR DE CATEGORÍA EXACTO -->
-        <label style="font-size:11px;">Selecciona la Categoría:</label>
-        <select id="postCat">
-            <option value="La Rinconada">🐴 Caballos / En Vivo (La Rinconada)</option>
-            <option value="MLB">⚾ MLB</option>
-            <option value="NFL">🏈 NFL</option>
-            <option value="Fútbol">⚽ Fútbol</option>
-            <option value="NBA">🏀 NBA</option>
-        </select>
-
-        <input type="text" id="postTitle" placeholder="Título del Pronóstico">
-        <textarea id="postDetails" rows="4" placeholder="Detalles de los pronósticos..."></textarea>
-        <button onclick="publicarPronostico()">Publicar Pronóstico</button>
+    <div class="card" id="authCard">
+        <h3 style="font-size:14px; color:var(--gold);">🔒 Acceso VIP</h3>
+        <input type="text" id="userKey" placeholder="Ingresa tu clave VIP">
+        <button onclick="validarClave()">Entrar a los Pronósticos</button>
     </div>
 
-    <!-- GESTIÓN / BORRADO DE PRONÓSTICOS -->
-    <div class="card">
-        <h3>🗑️ Administrar Pronósticos Publicados</h3>
-        <div id="postsListArea">
-            <p style="font-size:11px; color:#777;">Cargando pronósticos...</p>
-        </div>
+    <div class="card" id="welcomeCard" style="display:none; border-color:var(--green);">
+        <p style="color:#4caf50; font-weight:700; font-size:13px;">✔ Sesión VIP Activa</p>
+        <p id="welcomeUser" style="font-size:12px; color:#ccc;"></p>
+    </div>
+
+    <h3 style="font-size:15px; margin-top:20px; margin-bottom:10px;">🔥 Jugadas y Pronósticos de Hoy</h3>
+    <div id="postsArea">
+        <p style="font-size:12px; color:#777;">Cargando información...</p>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
-    db.collection("configuracion").doc("general").get().then((doc) => {
+    let esVIP = false;
+
+    db.collection("configuracion").doc("general").onSnapshot((doc) => {
         if(doc.exists) {
-            document.getElementById('logoUrl').value = doc.data().logoUrl || '';
-            document.getElementById('wsNum').value = doc.data().whatsapp || '';
-        }
-    });
-
-    db.collection("configuracion").doc("pagos").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('pmData').value = doc.data().pagoMovil || '';
-            document.getElementById('binanceData').value = doc.data().binance || '';
-            document.getElementById('otrosData').value = doc.data().otros || '';
-        }
-    });
-
-    function guardarConfigGeneral() {
-        const logo = document.getElementById('logoUrl').value.trim();
-        const ws = document.getElementById('wsNum').value.trim();
-        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
-        .then(() => alert("✔ Logo y WhatsApp guardados."));
-    }
-
-    function guardarConfigPagos() {
-        const pm = document.getElementById('pmData').value.trim();
-        const binance = document.getElementById('binanceData').value.trim();
-        const otros = document.getElementById('otrosData').value.trim();
-        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
-        .then(() => alert("✔ Métodos de pago guardados."));
-    }
-
-    function guardarClave() {
-        const cliente = document.getElementById('clientName').value.trim();
-        const clave = document.getElementById('clientKey').value.trim().toUpperCase();
-        if(!cliente || !clave) return alert("Completa los datos.");
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true })
-        .then(() => { alert(`✔ Clave ${clave} activada`); document.getElementById('clientName').value = ''; document.getElementById('clientKey').value = ''; });
-    }
-
-    function publicarPronostico() {
-        const cat = document.getElementById('postCat').value;
-        const titulo = document.getElementById('postTitle').value.trim();
-        const detalles = document.getElementById('postDetails').value.trim();
-        if(!titulo || !detalles) return alert("Completa el título y los detalles del pronóstico.");
-        
-        const fechaActual = new Date().toLocaleString();
-
-        db.collection("pronosticos").add({ 
-            categoria: cat, 
-            titulo: titulo, 
-            detalles: detalles, 
-            fechaTexto: fechaActual,
-            fecha: firebase.firestore.FieldValue.serverTimestamp() 
-        })
-        .then(() => { 
-            alert("🚀 Pronóstico publicado con éxito."); 
-            document.getElementById('postTitle').value = ''; 
-            document.getElementById('postDetails').value = ''; 
-        });
-    }
-
-    // CARGAR Y LISTAR USUARIOS VIP
-    db.collection("claves").onSnapshot((snapshot) => {
-        const area = document.getElementById('usersListArea');
-        area.innerHTML = '';
-        if(snapshot.empty) {
-            area.innerHTML = '<p style="font-size:11px; color:#777;">No hay claves registradas.</p>';
-            return;
-        }
-        snapshot.forEach((doc) => {
             const data = doc.data();
-            const claveId = doc.id;
-            area.innerHTML += `
-                <div class="admin-item">
-                    <div><b>${data.cliente}</b><br><span style="color:#ffc107; font-size:10px;">Clave: ${claveId}</span></div>
-                    <button class="btn-danger" onclick="borrarClave('${claveId}')">Quitar Acceso</button>
-                </div>
-            `;
-        });
+            if(data.logoUrl) {
+                const img = document.getElementById('appLogo');
+                img.src = data.logoUrl;
+                img.style.display = 'block';
+            }
+            if(data.whatsapp) {
+                const ws = document.getElementById('wsBtn');
+                ws.href = `https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}?text=Hola%20PulsoFort99,%20quiero%20solicitar%20mi%20acceso%20VIP`;
+                ws.style.display = 'flex';
+            }
+        }
     });
 
-    function borrarClave(claveId) {
-        if(confirm(`¿Estás seguro de eliminar la clave ${claveId}? El usuario perderá el acceso.`)) {
-            db.collection("claves").doc(claveId).delete()
-            .then(() => alert("✔ Acceso revocado / Clave eliminada."));
+    db.collection("configuracion").doc("pagos").onSnapshot((doc) => {
+        const area = document.getElementById('paymentMethodsArea');
+        if(doc.exists && Object.keys(doc.data()).length > 0) {
+            const data = doc.data();
+            area.innerHTML = `
+                ${data.pagoMovil ? `<div class="payment-box"><b>📲 Pago Móvil:</b><br>${data.pagoMovil.replace(/\n/g, '<br>')}</div>` : ''}
+                ${data.binance ? `<div class="payment-box"><b>🟡 Binance Pay:</b><br>${data.binance.replace(/\n/g, '<br>')}</div>` : ''}
+                ${data.otros ? `<div class="payment-box"><b>💵 Otros Métodos:</b><br>${data.otros.replace(/\n/g, '<br>')}</div>` : ''}
+            `;
+        } else {
+            area.innerHTML = '<p style="font-size:11px; color:#777; margin-top:8px;">No hay métodos de pago configurados aún.</p>';
         }
+    });
+
+    function validarClave() {
+        const clave = document.getElementById('userKey').value.trim().toUpperCase();
+        if(!clave) return alert("Por favor ingresa tu clave.");
+
+        db.collection("claves").doc(clave).get().then((doc) => {
+            if (doc.exists && doc.data().activa) {
+                esVIP = true;
+                document.getElementById('authCard').style.display = 'none';
+                document.getElementById('welcomeCard').style.display = 'block';
+                document.getElementById('welcomeUser').innerText = "Cliente VIP: " + doc.data().cliente;
+                cargarPronosticos();
+            } else {
+                alert("❌ Clave inválida o desactivada.");
+            }
+        });
     }
 
-    // CARGAR Y LISTAR PRONÓSTICOS PARA BORRARLOS
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        const area = document.getElementById('postsListArea');
-        area.innerHTML = '';
-        if(snapshot.empty) {
-            area.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos publicados.</p>';
-            return;
-        }
-        snapshot.forEach((doc) => {
-            const item = doc.data();
-            const postId = doc.id;
-            const fechaPublicacion = item.fechaTexto || 'Reciente';
+    function cargarPronosticos() {
+        db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+            const area = document.getElementById('postsArea');
+            area.innerHTML = '';
             
-            area.innerHTML += `
-                <div class="admin-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="color:#ffc107; font-weight:bold;">${item.categoria}</span>
-                        <button class="btn-danger" onclick="borrarPronostico('${postId}')">Eliminar</button>
-                    </div>
-                    <b style="font-size:13px;">${item.titulo}</b>
-                    <span style="font-size:10px; color:#888;">📅 Publicado: ${fechaPublicacion}</span>
-                    <p style="font-size:11px; color:#aaa; white-space: pre-line; max-height: 40px; overflow: hidden; margin:0;">${item.detalles}</p>
-                </div>
-            `;
-        });
-    });
+            if (snapshot.empty) {
+                area.innerHTML = '<p style="font-size:12px; color:#777;">No hay pronósticos publicados por hoy.</p>';
+                return;
+            }
 
-    function borrarPronostico(postId) {
-        if(confirm("¿Estás seguro de eliminar este pronóstico? Se borrará de la página principal.")) {
-            db.collection("pronosticos").doc(postId).delete()
-            .then(() => alert("✔ Pronóstico eliminado."));
-        }
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                area.innerHTML += `
+                    <div class="card" style="border-left: 3px solid ${esVIP ? 'var(--green)' : 'var(--red)'}">
+                        <span class="tag">${item.categoria || 'VIP'}</span>
+                        <h4 style="margin:6px 0; font-size:14px;">${item.titulo}</h4>
+                        <p class="${esVIP ? '' : 'blur'}" style="font-size:12px; white-space: pre-line;">${item.detalles}</p>
+                        ${!esVIP ? '<p style="font-size:10px; color:var(--gold); margin-top:6px;">🔒 Ingresa tu clave VIP para desbloquear.</p>' : ''}
+                    </div>
+                `;
+            });
+        });
     }
+
+    cargarPronosticos();
 </script>
 </body>
 </html>
