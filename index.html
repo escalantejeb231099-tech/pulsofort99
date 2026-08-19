@@ -2,39 +2,215 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>PulsoFort99</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulsoFort99 - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <style>
+        body { background: #121212; color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; }
+        .container { max-width: 480px; margin: 0 auto; }
+        .card { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h3 { font-size: 14px; color: #ffc107; margin-bottom: 10px; }
+        input, select, textarea, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
+        input:focus, select:focus, textarea:focus { border-color: #ffc107; outline: none; box-shadow: 0 0 8px rgba(255, 193, 7, 0.2); }
+        button { background: #d32f2f; color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
+        .btn-green { background: #2e7d32; }
+        .btn-danger { background: #b71c1c; padding: 6px 10px; font-size: 11px; margin-top: 5px; width: auto; }
+        .admin-item { background: #252525; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    </style>
 </head>
 <body>
-    <h1>PulsoFort99</h1>
-    
-    <h2>Hipismo</h2>
-    <div id="hipismoArea"></div>
 
-    <h2>Deportes</h2>
-    <div id="deportesArea"></div>
+<div class="container">
+    <div style="background:#d32f2f; color:white; text-align:center; padding:12px; border-radius:8px; margin-bottom:15px;">
+        <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
+    </div>
 
-    <script src="firebase-config.js"></script>
-    <script>
-        db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot(snap => {
-            let hipismoHtml = '';
-            let deportesHtml = '';
-            
-            snap.forEach(doc => {
-                let d = doc.data();
-                let item = `<div><b>${d.titulo}</b><p>${d.detalles}</p></div><hr>`;
-                
-                if(d.categoria === 'Hipismo') {
-                    hipismoHtml += item;
-                } else {
-                    deportesHtml += item;
-                }
-            });
-            
-            document.getElementById('hipismoArea').innerHTML = hipismoHtml;
-            document.getElementById('deportesArea').innerHTML = deportesHtml;
+    <div class="card">
+        <h3>🖼️ Configurar Logo y WhatsApp</h3>
+        <label style="font-size:11px;">URL del Logo:</label>
+        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
+        <label style="font-size:11px;">Número de WhatsApp:</label>
+        <input type="text" id="wsNum" placeholder="+584121234567">
+        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
+    </div>
+
+    <div class="card">
+        <h3>💳 Configurar Métodos de Pago</h3>
+        <label style="font-size:11px;">Pago Móvil:</label>
+        <textarea id="pmData" rows="3" placeholder="Banco, Cédula, Teléfono..."></textarea>
+        <label style="font-size:11px;">Binance Pay:</label>
+        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
+        <label style="font-size:11px;">Otros Métodos:</label>
+        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
+        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
+    </div>
+
+    <div class="card">
+        <h3>🔑 Activar Clave VIP</h3>
+        <input type="text" id="clientName" placeholder="Nombre del Cliente">
+        <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
+        <button class="btn-green" onclick="guardarClave()">Activar Clave VIP</button>
+    </div>
+
+    <!-- GESTIÓN DE USUARIOS VIP -->
+    <div class="card">
+        <h3>👥 Usuarios y Claves Activas</h3>
+        <div id="usersListArea">
+            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🚀 Publicar Pronóstico</h3>
+        
+        <!-- SELECTOR DE CATEGORÍA EXACTO -->
+        <label style="font-size:11px;">Selecciona la Categoría:</label>
+        <select id="postCat">
+            <option value="La Rinconada">🐴 Caballos / En Vivo (La Rinconada)</option>
+            <option value="MLB">⚾ MLB</option>
+            <option value="NFL">🏈 NFL</option>
+            <option value="Fútbol">⚽ Fútbol</option>
+            <option value="NBA">🏀 NBA</option>
+        </select>
+
+        <input type="text" id="postTitle" placeholder="Título del Pronóstico">
+        <textarea id="postDetails" rows="4" placeholder="Detalles de los pronósticos..."></textarea>
+        <button onclick="publicarPronostico()">Publicar Pronóstico</button>
+    </div>
+
+    <!-- GESTIÓN / BORRADO DE PRONÓSTICOS -->
+    <div class="card">
+        <h3>🗑️ Administrar Pronósticos Publicados</h3>
+        <div id="postsListArea">
+            <p style="font-size:11px; color:#777;">Cargando pronósticos...</p>
+        </div>
+    </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script>
+    db.collection("configuracion").doc("general").get().then((doc) => {
+        if(doc.exists) {
+            document.getElementById('logoUrl').value = doc.data().logoUrl || '';
+            document.getElementById('wsNum').value = doc.data().whatsapp || '';
+        }
+    });
+
+    db.collection("configuracion").doc("pagos").get().then((doc) => {
+        if(doc.exists) {
+            document.getElementById('pmData').value = doc.data().pagoMovil || '';
+            document.getElementById('binanceData').value = doc.data().binance || '';
+            document.getElementById('otrosData').value = doc.data().otros || '';
+        }
+    });
+
+    function guardarConfigGeneral() {
+        const logo = document.getElementById('logoUrl').value.trim();
+        const ws = document.getElementById('wsNum').value.trim();
+        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
+        .then(() => alert("✔ Logo y WhatsApp guardados."));
+    }
+
+    function guardarConfigPagos() {
+        const pm = document.getElementById('pmData').value.trim();
+        const binance = document.getElementById('binanceData').value.trim();
+        const otros = document.getElementById('otrosData').value.trim();
+        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
+        .then(() => alert("✔ Métodos de pago guardados."));
+    }
+
+    function guardarClave() {
+        const cliente = document.getElementById('clientName').value.trim();
+        const clave = document.getElementById('clientKey').value.trim().toUpperCase();
+        if(!cliente || !clave) return alert("Completa los datos.");
+        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true })
+        .then(() => { alert(`✔ Clave ${clave} activada`); document.getElementById('clientName').value = ''; document.getElementById('clientKey').value = ''; });
+    }
+
+    function publicarPronostico() {
+        const cat = document.getElementById('postCat').value;
+        const titulo = document.getElementById('postTitle').value.trim();
+        const detalles = document.getElementById('postDetails').value.trim();
+        if(!titulo || !detalles) return alert("Completa el título y los detalles del pronóstico.");
+        
+        const fechaActual = new Date().toLocaleString();
+
+        db.collection("pronosticos").add({ 
+            categoria: cat, 
+            titulo: titulo, 
+            detalles: detalles, 
+            fechaTexto: fechaActual,
+            fecha: firebase.firestore.FieldValue.serverTimestamp() 
+        })
+        .then(() => { 
+            alert("🚀 Pronóstico publicado con éxito."); 
+            document.getElementById('postTitle').value = ''; 
+            document.getElementById('postDetails').value = ''; 
         });
-    </script>
+    }
+
+    // CARGAR Y LISTAR USUARIOS VIP
+    db.collection("claves").onSnapshot((snapshot) => {
+        const area = document.getElementById('usersListArea');
+        area.innerHTML = '';
+        if(snapshot.empty) {
+            area.innerHTML = '<p style="font-size:11px; color:#777;">No hay claves registradas.</p>';
+            return;
+        }
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const claveId = doc.id;
+            area.innerHTML += `
+                <div class="admin-item">
+                    <div><b>${data.cliente}</b><br><span style="color:#ffc107; font-size:10px;">Clave: ${claveId}</span></div>
+                    <button class="btn-danger" onclick="borrarClave('${claveId}')">Quitar Acceso</button>
+                </div>
+            `;
+        });
+    });
+
+    function borrarClave(claveId) {
+        if(confirm(`¿Estás seguro de eliminar la clave ${claveId}? El usuario perderá el acceso.`)) {
+            db.collection("claves").doc(claveId).delete()
+            .then(() => alert("✔ Acceso revocado / Clave eliminada."));
+        }
+    }
+
+    // CARGAR Y LISTAR PRONÓSTICOS PARA BORRARLOS
+    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+        const area = document.getElementById('postsListArea');
+        area.innerHTML = '';
+        if(snapshot.empty) {
+            area.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos publicados.</p>';
+            return;
+        }
+        snapshot.forEach((doc) => {
+            const item = doc.data();
+            const postId = doc.id;
+            const fechaPublicacion = item.fechaTexto || 'Reciente';
+            
+            area.innerHTML += `
+                <div class="admin-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#ffc107; font-weight:bold;">${item.categoria}</span>
+                        <button class="btn-danger" onclick="borrarPronostico('${postId}')">Eliminar</button>
+                    </div>
+                    <b style="font-size:13px;">${item.titulo}</b>
+                    <span style="font-size:10px; color:#888;">📅 Publicado: ${fechaPublicacion}</span>
+                    <p style="font-size:11px; color:#aaa; white-space: pre-line; max-height: 40px; overflow: hidden; margin:0;">${item.detalles}</p>
+                </div>
+            `;
+        });
+    });
+
+    function borrarPronostico(postId) {
+        if(confirm("¿Estás seguro de eliminar este pronóstico? Se borrará de la página principal.")) {
+            db.collection("pronosticos").doc(postId).delete()
+            .then(() => alert("✔ Pronóstico eliminado."));
+        }
+    }
+</script>
 </body>
 </html>
