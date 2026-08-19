@@ -3,46 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>PulsoFort99</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <style>
-        body { background: #0A0A0A; color: #F5F5F5; font-family: 'Montserrat', sans-serif; padding: 20px; }
-        .container { max-width: 480px; margin: auto; }
-        .stats-box { display: flex; justify-content: space-between; background: #121212; padding: 20px; border-radius: 4px; border: 1px solid #D4AF37; margin-bottom: 20px; }
-        .stat span { display: block; font-size: 20px; font-weight: 800; color: #D4AF37; }
-        .cat-title { color: #D4AF37; font-size: 14px; margin: 20px 0 10px; border-bottom: 1px solid #333; }
-        .post-card { background: #121212; padding: 15px; margin-bottom: 10px; border-radius: 4px; border-left: 2px solid #D4AF37; }
-    </style>
 </head>
 <body>
-<div class="container">
-    <div id="logoArea" style="text-align:center;"></div>
-    <div class="stats-box">
-        <div class="stat"><span id="efectividad">0%</span><small>Efectividad</small></div>
-        <div class="stat"><span id="aciertos">0</span><small>Aciertos</small></div>
-    </div>
-
-    <div class="cat-title">HIPISMO</div>
+    <h1>PulsoFort99</h1>
+    
+    <h2>Hipismo</h2>
     <div id="hipismoArea"></div>
-    <div class="cat-title">DEPORTES</div>
+
+    <h2>Deportes</h2>
     <div id="deportesArea"></div>
-</div>
-<script src="firebase-config.js"></script>
-<script>
-    db.collection("pronosticos").onSnapshot(snap => {
-        let g=0, p=0, h='', d='';
-        snap.forEach(doc => {
-            let data = doc.data();
-            if(data.resultado === 'ganador') g++; else if(data.resultado === 'perdedor') p++;
-            let card = `<div class="post-card"><b>${data.titulo}</b><p style="font-size:12px">${data.detalles}</p></div>`;
-            if(data.categoria === 'Hipismo') h += card; else d += card;
+
+    <script src="firebase-config.js"></script>
+    <script>
+        db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot(snap => {
+            let hipismoHtml = '';
+            let deportesHtml = '';
+            
+            snap.forEach(doc => {
+                let d = doc.data();
+                let item = `<div><b>${d.titulo}</b><p>${d.detalles}</p></div><hr>`;
+                
+                if(d.categoria === 'Hipismo') {
+                    hipismoHtml += item;
+                } else {
+                    deportesHtml += item;
+                }
+            });
+            
+            document.getElementById('hipismoArea').innerHTML = hipismoHtml;
+            document.getElementById('deportesArea').innerHTML = deportesHtml;
         });
-        document.getElementById('efectividad').innerText = (g+p)>0 ? Math.round(g/(g+p)*100) + '%' : '0%';
-        document.getElementById('aciertos').innerText = g;
-        document.getElementById('hipismoArea').innerHTML = h;
-        document.getElementById('deportesArea').innerHTML = d;
-    });
-</script>
+    </script>
 </body>
 </html>
