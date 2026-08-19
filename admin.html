@@ -19,7 +19,6 @@
         .btn-green { background: var(--green); }
         .btn-orange { background: #e65100; }
         
-        /* Lista de Ítems en el Admin */
         .item-list { background: #262626; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--gold); font-size: 12px; }
         .btn-group { display: flex; gap: 5px; margin-top: 8px; }
         .btn-sm { padding: 6px 10px; font-size: 10px; width: auto; flex: 1; margin: 0; }
@@ -65,10 +64,10 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. GESTIONAR PRONÓSTICOS Y RESULTADOS (WIN / LOSE) -->
+    <!-- 2. GESTIONAR PRONÓSTICOS -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App de usuarios, o bórralos.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
@@ -112,7 +111,6 @@
 
 <script src="firebase-config.js"></script>
 <script>
-    // Cargar Configuración Existente
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
@@ -128,7 +126,6 @@
         }
     });
 
-    // Guardar Marca y Ajustes
     function guardarConfigGeneral() {
         const logo = document.getElementById('logoUrl').value.trim();
         const ws = document.getElementById('wsNum').value.trim();
@@ -144,7 +141,6 @@
         .then(() => alert("✔ Métodos de pago guardados."));
     }
 
-    // 1. PUBLICAR PRONÓSTICO
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
@@ -166,7 +162,6 @@
         });
     }
 
-    // 2. MOSTRAR Y ACTUALIZAR ESTATUS (WIN/LOSE) DE PRONÓSTICOS
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const list = document.getElementById('adminPostsList');
         list.innerHTML = '';
@@ -211,7 +206,6 @@
         }
     }
 
-    // 3. REGISTRAR Y DESACTIVAR/ACTIVAR ACCESOS VIP DE USUARIOS
     function guardarClave() {
         const cliente = document.getElementById('clientName').value.trim();
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
@@ -225,7 +219,6 @@
         });
     }
 
-    // Leer lista de usuarios en tiempo real
     db.collection("claves").onSnapshot((snapshot) => {
         const userList = document.getElementById('adminUsersList');
         userList.innerHTML = '';
