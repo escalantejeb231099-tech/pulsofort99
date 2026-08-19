@@ -27,6 +27,7 @@
         .status-win { background: var(--green); color: #fff; }
         .status-lose { background: #b71c1c; color: #fff; }
         .status-pending { background: #ff9800; color: #000; }
+        .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -39,6 +40,7 @@
     <!-- 1. PUBLICAR PRONÓSTICO -->
     <div class="card">
         <h3>🚀 Publicar Nuevo Pronóstico</h3>
+        
         <label>Deporte / Categoría:</label>
         <select id="postCat">
             <option value="CARRERAS DE CABALLOS">🐎 CARRERAS DE CABALLOS</option>
@@ -48,6 +50,12 @@
             <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
         
+        <label>Tipo de Jugada:</label>
+        <select id="postType">
+            <option value="DIRECTA">DIRECTA</option>
+            <option value="COMBINADA">COMBINADA (PARLAY)</option>
+        </select>
+
         <label>Título / Partido:</label>
         <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
@@ -60,7 +68,7 @@
     <!-- 2. GESTIONAR PRONÓSTICOS Y RESULTADOS (WIN / LOSE) -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App de usuarios.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App de usuarios, o bórralos.</p>
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
@@ -139,12 +147,14 @@
     // 1. PUBLICAR PRONÓSTICO
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
+        const tipo = document.getElementById('postType').value;
         const titulo = document.getElementById('postTitle').value.trim();
         const detalles = document.getElementById('postDetails').value.trim();
         if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
         db.collection("pronosticos").add({
             categoria: cat,
+            tipo: tipo,
             titulo: titulo,
             detalles: detalles,
             estatus: "pendiente",
@@ -176,12 +186,13 @@
             list.innerHTML += `
                 <div class="item-list">
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
+                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span><br>
                     <b>[${p.categoria}]</b> ${p.titulo}
                     <div class="btn-group">
                         <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
                         <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
                         <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️</button>
+                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
                     </div>
                 </div>
             `;
@@ -194,7 +205,9 @@
 
     function eliminarPronostico(id) {
         if(confirm("¿Seguro de eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete();
+            db.collection("pronosticos").doc(id).delete().then(() => {
+                alert("🗑️ Pronóstico eliminado con éxito.");
+            });
         }
     }
 
