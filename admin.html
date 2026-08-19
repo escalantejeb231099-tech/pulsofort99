@@ -12,8 +12,8 @@
         .container { max-width: 480px; margin: 0 auto; }
         .card { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h3 { font-size: 14px; color: #ffc107; margin-bottom: 10px; }
-        input, textarea, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
-        input:focus, textarea:focus { border-color: #ffc107; outline: none; box-shadow: 0 0 8px rgba(255, 193, 7, 0.2); }
+        input, select, textarea, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
+        input:focus, select:focus, textarea:focus { border-color: #ffc107; outline: none; box-shadow: 0 0 8px rgba(255, 193, 7, 0.2); }
         button { background: #d32f2f; color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
         .btn-green { background: #2e7d32; }
         .btn-danger { background: #b71c1c; padding: 6px 10px; font-size: 11px; margin-top: 5px; width: auto; }
@@ -64,8 +64,18 @@
 
     <div class="card">
         <h3>🚀 Publicar Pronóstico</h3>
-        <input type="text" id="postCat" placeholder="Categoría (La Rinconada, MLB...)">
-        <input type="text" id="postTitle" placeholder="Título">
+        
+        <!-- SELECTOR DE CATEGORÍA EXACTO -->
+        <label style="font-size:11px;">Selecciona la Categoría:</label>
+        <select id="postCat">
+            <option value="La Rinconada">🐴 Caballos / En Vivo (La Rinconada)</option>
+            <option value="MLB">⚾ MLB</option>
+            <option value="NFL">🏈 NFL</option>
+            <option value="Fútbol">⚽ Fútbol</option>
+            <option value="NBA">🏀 NBA</option>
+        </select>
+
+        <input type="text" id="postTitle" placeholder="Título del Pronóstico">
         <textarea id="postDetails" rows="4" placeholder="Detalles de los pronósticos..."></textarea>
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
@@ -120,15 +130,28 @@
     }
 
     function publicarPronostico() {
-        const cat = document.getElementById('postCat').value.trim();
+        const cat = document.getElementById('postCat').value;
         const titulo = document.getElementById('postTitle').value.trim();
         const detalles = document.getElementById('postDetails').value.trim();
-        if(!titulo || !detalles) return alert("Completa el pronóstico.");
-        db.collection("pronosticos").add({ categoria: cat || 'VIP', titulo: titulo, detalles: detalles, fecha: new Date() })
-        .then(() => { alert("🚀 Pronóstico publicado."); document.getElementById('postTitle').value = ''; document.getElementById('postDetails').value = ''; });
+        if(!titulo || !detalles) return alert("Completa el título y los detalles del pronóstico.");
+        
+        const fechaActual = new Date().toLocaleString();
+
+        db.collection("pronosticos").add({ 
+            categoria: cat, 
+            titulo: titulo, 
+            detalles: detalles, 
+            fechaTexto: fechaActual,
+            fecha: firebase.firestore.FieldValue.serverTimestamp() 
+        })
+        .then(() => { 
+            alert("🚀 Pronóstico publicado con éxito."); 
+            document.getElementById('postTitle').value = ''; 
+            document.getElementById('postDetails').value = ''; 
+        });
     }
 
-    // CARGAR Y LISTAR USUARIOS VIP PARA BORRARLOS
+    // CARGAR Y LISTAR USUARIOS VIP
     db.collection("claves").onSnapshot((snapshot) => {
         const area = document.getElementById('usersListArea');
         area.innerHTML = '';
@@ -166,14 +189,17 @@
         snapshot.forEach((doc) => {
             const item = doc.data();
             const postId = doc.id;
+            const fechaPublicacion = item.fechaTexto || 'Reciente';
+            
             area.innerHTML += `
                 <div class="admin-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                    <div style="width:100%; display:flex; justify-content:space-between;">
-                        <span style="color:var(--gold); font-weight:bold;">${item.categoria}</span>
+                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#ffc107; font-weight:bold;">${item.categoria}</span>
                         <button class="btn-danger" onclick="borrarPronostico('${postId}')">Eliminar</button>
                     </div>
                     <b style="font-size:13px;">${item.titulo}</b>
-                    <p style="font-size:11px; color:#aaa; white-space: pre-line; max-height: 50px; overflow: hidden;">${item.detalles}</p>
+                    <span style="font-size:10px; color:#888;">📅 Publicado: ${fechaPublicacion}</span>
+                    <p style="font-size:11px; color:#aaa; white-space: pre-line; max-height: 40px; overflow: hidden; margin:0;">${item.detalles}</p>
                 </div>
             `;
         });
@@ -187,4 +213,4 @@
     }
 </script>
 </body>
-            </html>
+</html>
