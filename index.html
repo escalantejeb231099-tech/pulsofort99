@@ -9,13 +9,14 @@
     <style>
         body { background: #0A0A0A; color: #F5F5F5; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 480px; margin: auto; }
-        #logoArea img { max-width: 120px; display: block; margin: 0 auto 30px; border-radius: 4px; }
-        .stats-box { display: flex; justify-content: space-between; background: #121212; padding: 25px; border-radius: 4px; border: 1px solid #D4AF37; margin-bottom: 20px; }
+        #logoArea img { max-width: 140px; display: block; margin: 0 auto 30px; border-radius: 4px; }
+        .stats-box { display: flex; justify-content: space-between; background: #121212; padding: 20px; border-radius: 4px; border: 1px solid #D4AF37; margin-bottom: 20px; }
         .stat { text-align: center; }
-        .stat span { display: block; font-size: 24px; font-weight: 800; color: #D4AF37; }
+        .stat span { display: block; font-size: 22px; font-weight: 800; color: #D4AF37; }
         .stat small { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .post-card { background: #121212; padding: 20px; border-radius: 4px; margin-bottom: 15px; border-left: 2px solid #D4AF37; border-bottom: 1px solid #1E1E1E; }
-        .badge { font-size: 9px; padding: 3px 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .post-card { background: #121212; padding: 20px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #D4AF37; }
+        .badge { font-size: 9px; padding: 3px 6px; font-weight: 800; text-transform: uppercase; color: #D4AF37; }
+        .btn-ws { background: #16a34a; color: #fff; padding: 15px; width: 100%; border: none; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -27,25 +28,31 @@
         <div class="stat"><span id="fallos">0</span><small>Fallos</small></div>
     </div>
     <div id="postsArea"></div>
+    <div class="card" style="background:#121212; padding:15px; border-radius:4px; margin-bottom:20px;">
+        <h3 style="color:#D4AF37; font-size:10px;">💳 Métodos de Pago</h3>
+        <p style="font-size:12px; color:#888;">Pago Móvil: <span id="pm" style="color:#fff;">...</span></p>
+        <p style="font-size:12px; color:#888;">Binance: <span id="bin" style="color:#fff;">...</span></p>
+    </div>
+    <button class="btn-ws" onclick="abrirWhatsApp()">Contactar por WhatsApp</button>
 </div>
 <script src="firebase-config.js"></script>
 <script>
+    let numWs = '';
     db.collection("configuracion").doc("general").onSnapshot(doc => {
         if(doc.data()?.logoUrl) document.getElementById('logoArea').innerHTML = `<img src="${doc.data().logoUrl}">`;
+        if(doc.data()?.whatsapp) numWs = doc.data().whatsapp.replace(/[^0-9]/g, '');
+    });
+    function abrirWhatsApp() { if(numWs) window.open(`https://wa.me/${numWs}`); else alert("Configura WhatsApp en el admin"); }
+    db.collection("configuracion").doc("pagos").onSnapshot(doc => {
+        document.getElementById('pm').innerText = doc.data()?.pagoMovil || 'No configurado';
+        document.getElementById('bin').innerText = doc.data()?.binance || 'No configurado';
     });
     db.collection("pronosticos").onSnapshot(snap => {
-        let g = 0, p = 0, html = '';
+        let g=0, p=0, html='';
         snap.forEach(doc => {
             let d = doc.data();
-            if(d.resultado === 'ganador') g++;
-            if(d.resultado === 'perdedor') p++;
-            html += `<div class="post-card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span style="font-size:10px; color:#D4AF37;">${d.categoria}</span>
-                <span class="badge" style="color:${d.resultado=='ganador'?'#15803d':'#991b1b'}">${d.resultado}</span></div>
-                <b style="font-size:15px; display:block; margin-bottom:5px;">${d.titulo}</b>
-                <p style="font-size:12px; color:#888; margin:0;">${d.detalles}</p>
-            </div>`;
+            if(d.resultado === 'ganador') g++; else if(d.resultado === 'perdedor') p++;
+            html += `<div class="post-card"><span class="badge">${d.categoria}</span><br><b style="font-size:14px; color:#fff;">${d.titulo}</b><p style="font-size:12px; color:#888;">${d.detalles}</p></div>`;
         });
         document.getElementById('efectividad').innerText = (g+p)>0 ? Math.round(g/(g+p)*100) + '%' : '0%';
         document.getElementById('aciertos').innerText = g;
