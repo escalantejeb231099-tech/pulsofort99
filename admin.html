@@ -28,10 +28,15 @@
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         
-        /* HEADER HORIZONTAL POR DEPORTE CON EFECTIVIDAD EN LÍNEA */
-        .sport-bar { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 8px 12px; border-radius: 6px; margin: 12px 0 8px 0; border-left: 4px solid var(--gold); }
-        .sport-title { font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; }
-        .sport-eff { font-size: 11px; font-weight: 800; color: var(--gold); background: #121212; padding: 3px 8px; border-radius: 4px; }
+        /* BLOQUE POR DEPORTE */
+        .sport-block { background: #181818; border: 1px solid #333; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+        .sport-title-header { font-size: 12px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
+        
+        /* CONTENEDOR HORIZONTAL DE LOGROS Y ACIERTOS */
+        .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: thin; }
+        .logro-chip { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 6px 10px; white-space: nowrap; font-size: 10px; flex-shrink: 0; }
+        .logro-name { font-weight: bold; color: #fff; }
+        .logro-pct { font-weight: 800; color: var(--gold); margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -63,8 +68,11 @@
         <label>Título / Partido:</label>
         <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
-        <label>Detalles del Pronóstico:</label>
-        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada / Logro (Ej: Yankees -140)"></textarea>
+        <label>Logro / Detalle (Ej: -140, Runline, Alta 8.5):</label>
+        <input type="text" id="postLogro" placeholder="Ej: -140">
+        
+        <label>Detalles Completos del Pronóstico:</label>
+        <textarea id="postDetails" rows="2" placeholder="Explicación o detalles adicionales..."></textarea>
         
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
@@ -72,18 +80,18 @@
     <!-- 2. PRONÓSTICOS ACTIVOS (ÚLTIMAS 24 HORAS) -->
     <div class="card">
         <h3>📊 Pronósticos Activos (Últimas 24h)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Cumplidas las 24h pasan al histórico por deporte.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Vistas recientes del día para mantener la interfaz limpia.</p>
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
     </div>
 
-    <!-- 3. HISTÓRICO Y EFECTIVIDAD HORIZONTAL POR DEPORTE -->
+    <!-- 3. HISTÓRICO Y EFECTIVIDAD POR LOGRO DE FORMA HORIZONTAL POR DEPORTE -->
     <div class="card">
-        <h3>📂 Histórico y Aciertos por Deporte</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Organizado por deporte con su % de efectividad de logros a la derecha.</p>
-        <div id="archivedPostsList">
-            <p style="font-size:11px; color:#777;">Cargando histórico...</p>
+        <h3>📂 Histórico y % de Aciertos por Logro (Por Deporte)</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Guardado permanente organizado por deporte con scroll horizontal de % por logro.</p>
+        <div id="sportsHistoryContainer">
+            <p style="font-size:11px; color:#777;">Cargando historial por deporte...</p>
         </div>
     </div>
 
@@ -159,34 +167,37 @@
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
         const titulo = document.getElementById('postTitle').value.trim();
+        const logro = document.getElementById('postLogro').value.trim().toUpperCase() || 'GENERAL';
         const detalles = document.getElementById('postDetails').value.trim();
-        if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
+        
+        if(!titulo) return alert("Por favor completa al menos el título.");
 
         db.collection("pronosticos").add({
             categoria: cat,
             tipo: tipo,
             titulo: titulo,
+            logro: logro,
             detalles: detalles,
             estatus: "pendiente",
-            fecha: new Date()
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
+            document.getElementById('postLogro').value = '';
             document.getElementById('postDetails').value = '';
         });
     }
 
-    // LISTAR ACTIVOS (<24H) E HISTÓRICO CON EFECTIVIDAD HORIZONTAL POR DEPORTE
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const listActive = document.getElementById('adminPostsList');
-        const listArchived = document.getElementById('archivedPostsList');
+        const historyContainer = document.getElementById('sportsHistoryContainer');
         
         listActive.innerHTML = '';
-        listArchived.innerHTML = '';
+        historyContainer.innerHTML = '';
 
         if(snapshot.empty) {
-            listActive.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos activos.</p>';
-            listArchived.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos archivados.</p>';
+            listActive.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos registrados.</p>';
+            historyContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay datos guardados.</p>';
             return;
         }
 
@@ -194,14 +205,15 @@
         const limite24h = 24 * 60 * 60 * 1000;
 
         let totalActivos = 0;
-        let archivadosPorDeporte = {};
-        let statsPorDeporte = {};
+        let deportesData = {}; 
 
         snapshot.forEach((doc) => {
             const id = doc.id;
             const p = doc.data();
             const fechaPost = p.fecha ? p.fecha.toDate().getTime() : ahora;
             const esReciente = (ahora - fechaPost) <= limite24h;
+            const deporte = p.categoria || "VARIOS";
+            const logroTag = p.logro ? p.logro.toUpperCase() : "GENERAL";
 
             let badgeClass = 'status-pending';
             if(p.estatus === 'win') badgeClass = 'status-win';
@@ -210,36 +222,42 @@
             const itemHTML = `
                 <div class="item-list">
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span><br>
-                    <b>[${p.categoria}]</b> ${p.titulo}<br>
-                    <span style="color:#aaa; font-size:11px;">Detalles: ${p.detalles}</span>
+                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
+                    <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Logro: ${logroTag}</span><br>
+                    <b>[${deporte}]</b> ${p.titulo}<br>
+                    ${p.detalles ? `<span style="color:#aaa; font-size:11px;">${p.detalles}</span>` : ''}
                     <div class="btn-group">
                         <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
                         <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
                         <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
+                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️</button>
                     </div>
                 </div>
             `;
 
+            // PRONÓSTICOS ACTIVOS < 24 HORAS
             if(esReciente) {
                 totalActivos++;
                 listActive.innerHTML += itemHTML;
-            } else {
-                if(!archivadosPorDeporte[p.categoria]) archivadosPorDeporte[p.categoria] = [];
-                archivadosPorDeporte[p.categoria].push(itemHTML);
             }
 
-            // CONTABILIZAR ACIERTOS POR DEPORTE
-            if(!statsPorDeporte[p.categoria]) {
-                statsPorDeporte[p.categoria] = { win: 0, lose: 0, total: 0 };
+            // ORGANIZACIÓN POR DEPORTE PARA HISTÓRICO Y LOGROS HORIZONTALES
+            if(!deportesData[deporte]) {
+                deportesData[deporte] = { logros: {}, items: [] };
             }
+
+            deportesData[deporte].items.push(itemHTML);
+
+            if(!deportesData[deporte].logros[logroTag]) {
+                deportesData[deporte].logros[logroTag] = { win: 0, lose: 0, total: 0 };
+            }
+
             if(p.estatus === 'win') {
-                statsPorDeporte[p.categoria].win++;
-                statsPorDeporte[p.categoria].total++;
+                deportesData[deporte].logros[logroTag].win++;
+                deportesData[deporte].logros[logroTag].total++;
             } else if(p.estatus === 'lose') {
-                statsPorDeporte[p.categoria].lose++;
-                statsPorDeporte[p.categoria].total++;
+                deportesData[deporte].logros[logroTag].lose++;
+                deportesData[deporte].logros[logroTag].total++;
             }
         });
 
@@ -247,24 +265,42 @@
             listActive.innerHTML = '<p style="font-size:11px; color:#777;">Sin pronósticos en las últimas 24h.</p>';
         }
 
-        // RENDERIZAR HISTÓRICO Y BARRA HORIZONTAL CON EFECTIVIDAD POR DEPORTE
-        if(Object.keys(archivadosPorDeporte).length === 0) {
-            listArchived.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos con más de 24 horas.</p>';
-        } else {
-            for(const dep in archivadosPorDeporte) {
-                const st = statsPorDeporte[dep] || { win: 0, total: 0 };
-                const pct = st.total > 0 ? ((st.win / st.total) * 100).toFixed(1) + '%' : 'N/A';
+        // RENDERIZAR DEPORTES CON SUS LOGROS EN FILA HORIZONTAL
+        for(const dep in deportesData) {
+            const depData = deportesData[dep];
+            
+            let logrosHTML = '<div class="logros-row">';
+            let tieneLogros = false;
 
-                listArchived.innerHTML += `
-                    <div class="sport-bar">
-                        <span class="sport-title">${dep}</span>
-                        <span class="sport-eff">🎯 ${pct} (${st.win}W/${st.total} JUGADAS)</span>
-                    </div>
-                `;
-                archivadosPorDeporte[dep].forEach(html => {
-                    listArchived.innerHTML += html;
-                });
+            for(const lg in depData.logros) {
+                const lStats = depData.logros[lg];
+                if(lStats.total > 0) {
+                    tieneLogros = true;
+                    const pct = ((lStats.win / lStats.total) * 100).toFixed(0);
+                    logrosHTML += `
+                        <div class="logro-chip">
+                            <span class="logro-name">${lg}:</span>
+                            <span class="logro-pct">${pct}%</span>
+                            <span style="color:#888; font-size:9px;">(${lStats.win}W/${lStats.total}J)</span>
+                        </div>
+                    `;
+                }
             }
+
+            if(!tieneLogros) {
+                logrosHTML += '<span style="font-size:10px; color:#666;">Sin resultados WIN/LOSE evaluados aún.</span>';
+            }
+            logrosHTML += '</div>';
+
+            historyContainer.innerHTML += `
+                <div class="sport-block">
+                    <div class="sport-title-header">${dep}</div>
+                    <div style="font-size:10px; color:#aaa; margin-bottom:4px;">% Aciertos por Logro:</div>
+                    ${logrosHTML}
+                    <div style="font-size:10px; color:#aaa; margin-bottom:6px;">Historial de Jugadas:</div>
+                    ${depData.items.join('')}
+                </div>
+            `;
         }
     });
 
@@ -332,5 +368,4 @@
     }
 </script>
 </body>
-    </html>
-    
+</html>
