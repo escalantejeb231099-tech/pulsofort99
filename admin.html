@@ -10,30 +10,19 @@
     <script src="firebase-config.js"></script>
     <style>
         :root { --red: #d32f2f; --green: #2e7d32; --gold: #ffc107; --dark: #121212; --card: #1e1e1e; }
-        body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 12px; margin: 0; padding-bottom: 50px; }
+        body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
         .container { max-width: 480px; margin: 0 auto; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
         h3 { font-size: 14px; color: var(--gold); margin-bottom: 10px; margin-top:0; }
-        label { font-size: 11px; color: #ccc; display: block; margin-top: 6px; }
-        input, textarea, select, button { width: 100%; padding: 12px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 13px; box-sizing: border-box; }
-        button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; border-radius: 6px; }
+        label { font-size: 11px; color: #ccc; }
+        input, textarea, select, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
+        button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
         .btn-green { background: var(--green); }
         .btn-orange { background: #e65100; }
-        .btn-blue { background: #1976d2; }
         
-        .sport-accordion { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
-        .sport-header-btn { width: 100%; background: #222; color: var(--gold); padding: 12px; font-weight: 800; font-size: 12px; text-align: left; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 0; margin: 0; }
-        .sport-content { display: none; padding: 10px; background: #181818; }
-        .sport-content.open { display: block; }
-
-        .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; }
-        .logro-chip { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 6px 10px; white-space: nowrap; font-size: 10px; flex-shrink: 0; }
-        .logro-name { font-weight: bold; color: #fff; }
-        .logro-pct { font-weight: 800; color: var(--gold); margin-left: 4px; }
-
         .item-list { background: #262626; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--gold); font-size: 12px; }
         .btn-group { display: flex; gap: 5px; margin-top: 8px; }
-        .btn-sm { padding: 8px; font-size: 11px; width: auto; flex: 1; margin: 0; }
+        .btn-sm { padding: 6px 10px; font-size: 10px; width: auto; flex: 1; margin: 0; }
         .tag-status { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
         .status-win { background: var(--green); color: #fff; }
         .status-lose { background: #b71c1c; color: #fff; }
@@ -54,11 +43,11 @@
         
         <label>Deporte / Categoría:</label>
         <select id="postCat">
-            <option value="FUTBOL">⚽ FÚTBOL</option>
-            <option value="MLB">⚾ MLB</option>
             <option value="CARRERAS DE CABALLOS">🐎 CARRERAS DE CABALLOS</option>
+            <option value="MLB">⚾ MLB</option>
             <option value="NBA">🏀 NBA</option>
             <option value="NFL">🏈 NFL</option>
+            <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
         
         <label>Tipo de Jugada:</label>
@@ -68,79 +57,64 @@
         </select>
 
         <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Real Madrid vs Barcelona">
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
-        <label>Logro / Cuota / Momio (Ej: -140, -149, Runline):</label>
-        <input type="text" id="postLogro" placeholder="Ej: -149">
-        
-        <label>Detalles Completos:</label>
-        <textarea id="postDetails" rows="2" placeholder="Ej: Real Madrid a ganar cuota -149"></textarea>
+        <label>Logro / Cuota / Momio (Ej: -140, Runline, Ganador):</label>
+        <input type="text" id="postLogro" placeholder="Ej: -140" style="text-transform:uppercase;">
+
+        <label>Detalles del Pronóstico:</label>
+        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
         
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. NOTIFICACIONES -->
+    <!-- 2. GESTIONAR PRONÓSTICOS -->
     <div class="card">
-        <h3>🔔 Enviar Notificación / Mensaje</h3>
-        <label>Título:</label>
-        <input type="text" id="notifTitle" placeholder="Ej: ¡Nuevos pronósticos disponibles!">
-        <label>Mensaje:</label>
-        <textarea id="notifBody" rows="2" placeholder="Escribe el aviso..."></textarea>
-        <button class="btn-blue" onclick="enviarNotificacion()">Enviar Notificación</button>
-        
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Últimas Notificaciones:</h4>
-        <div id="notifHistoryList">
-            <p style="font-size:11px; color:#777;">Cargando notificaciones...</p>
+        <h3>📊 Gestionar Pronósticos Publicados</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
+        <div id="adminPostsList">
+            <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
     </div>
 
-    <!-- 3. PRONÓSTICOS ÚLTIMAS 24 HORAS -->
+    <!-- 3. ACTIVAR Y CONTROLAR USUARIOS VIP -->
     <div class="card">
-        <h3>🔥 Inicio: Pronósticos Recientes (24h)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Al pasar 24h se archivan al histórico.</p>
-        <div id="active24hList">
-            <p style="font-size:11px; color:#777;">Cargando pronósticos activos...</p>
-        </div>
-    </div>
-
-    <!-- 4. ARCHIVO HISTÓRICO -->
-    <div class="card">
-        <h3>📂 Archivo Histórico por Deporte</h3>
-        <div id="sportsAccordionContainer">
-            <p style="font-size:11px; color:#777;">Cargando deportes...</p>
-        </div>
-    </div>
-
-    <!-- 5. CLAVES VIP -->
-    <div class="card">
-        <h3>🔑 Gestión de Claves VIP</h3>
+        <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
         <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
-        <button class="btn-green" onclick="guardarClave()">Activar Clave VIP</button>
+        <button class="btn-green" onclick="guardarClave()">Activar Nueva Clave VIP</button>
 
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Claves Activas:</h4>
-        <div id="adminUsersList"></div>
+        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Lista de Claves Activas / Inactivas:</h4>
+        <div id="adminUsersList">
+            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
+        </div>
     </div>
 
-    <!-- 6. CONFIGURACIÓN -->
+    <!-- 4. CONFIGURACIONES GENERALES -->
     <div class="card">
-        <h3>🖼️ Logo y WhatsApp</h3>
-        <input type="text" id="logoUrl" placeholder="URL del Logo">
-        <input type="text" id="wsNum" placeholder="Número de WhatsApp">
-        <button onclick="guardarConfigGeneral()">Guardar Configuración</button>
+        <h3>🖼️ Configurar Logo y WhatsApp</h3>
+        <label>URL del Logo:</label>
+        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
+        <label>Número de WhatsApp:</label>
+        <input type="text" id="wsNum" placeholder="+584121234567">
+        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
     </div>
 
-    <!-- 7. MÉTODOS DE PAGO -->
+    <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
     <div class="card">
-        <h3>💳 Métodos de Pago</h3>
-        <textarea id="pmData" rows="2" placeholder="Pago Móvil..."></textarea>
-        <textarea id="binanceData" rows="2" placeholder="Binance..."></textarea>
-        <textarea id="otrosData" rows="2" placeholder="Otros datos..."></textarea>
-        <button onclick="guardarConfigPagos()">Guardar Métodos</button>
+        <h3>💳 Configurar Métodos de Pago</h3>
+        <label>Pago Móvil:</label>
+        <textarea id="pmData" rows="2" placeholder="Banco, Cédula, Teléfono..."></textarea>
+        <label>Binance Pay:</label>
+        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
+        <label>Otros Métodos:</label>
+        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
+        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
     </div>
 </div>
 
 <script>
+    // Función segura para calcular fechas
     function obtenerTiempoMillis(fechaCampo) {
         if (!fechaCampo) return new Date().getTime();
         try {
@@ -151,176 +125,46 @@
         return new Date().getTime();
     }
 
-    // LISTENER DE NOTIFICACIONES (SEPARADO Y PROTEGIDO)
     if (typeof db !== 'undefined') {
-        db.collection("notificaciones").onSnapshot((snapshot) => {
-            const notifContainer = document.getElementById('notifHistoryList');
-            if (!notifContainer) return;
-            
-            notifContainer.innerHTML = '';
-            if (snapshot.empty) {
-                notifContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones enviadas.</p>';
-                return;
+        db.collection("configuracion").doc("general").get().then((doc) => {
+            if(doc.exists) {
+                document.getElementById('logoUrl').value = doc.data().logoUrl || '';
+                document.getElementById('wsNum').value = doc.data().whatsapp || '';
             }
+        });
 
-            let notifs = [];
-            snapshot.forEach((doc) => {
-                notifs.push({ id: doc.id, ...doc.data() });
-            });
-
-            notifs.sort((a, b) => obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha));
-
-            notifs.forEach((n) => {
-                notifContainer.innerHTML += `
-                    <div style="background:#181818; padding:8px; border-radius:6px; margin-bottom:6px; border-left:2px solid #1976d2;">
-                        <b style="font-size:11px; color:#fff;">${n.titulo || 'Sin título'}</b>
-                        <p style="font-size:10px; color:#ccc; margin:2px 0 0 0;">${n.mensaje || ''}</p>
-                    </div>
-                `;
-            });
-        }, (err) => console.log("Error cargando notificaciones:", err));
-
-        // LISTENER DE PRONÓSTICOS
-        db.collection("pronosticos").onSnapshot((snapshot) => {
-            const active24hList = document.getElementById('active24hList');
-            const accordionContainer = document.getElementById('sportsAccordionContainer');
-
-            if (!active24hList || !accordionContainer) return;
-
-            active24hList.innerHTML = '';
-            accordionContainer.innerHTML = '';
-
-            if (snapshot.empty) {
-                active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos registrados.</p>';
-                accordionContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay histórico.</p>';
-                return;
+        db.collection("configuracion").doc("pagos").get().then((doc) => {
+            if(doc.exists) {
+                document.getElementById('pmData').value = doc.data().pagoMovil || '';
+                document.getElementById('binanceData').value = doc.data().binance || '';
+                document.getElementById('otrosData').value = doc.data().otros || '';
             }
-
-            const ahora = new Date().getTime();
-            const limite24h = 24 * 60 * 60 * 1000;
-
-            let itemsArray = [];
-            snapshot.forEach((doc) => {
-                itemsArray.push({ id: doc.id, ...doc.data() });
-            });
-
-            itemsArray.sort((a, b) => obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha));
-
-            let totalActivos = 0;
-            let deportesMap = {};
-
-            itemsArray.forEach((p) => {
-                const id = p.id;
-                const fechaPost = obtenerTiempoMillis(p.fecha);
-                const esReciente = (ahora - fechaPost) <= limite24h;
-                const deporte = p.categoria || "VARIOS";
-
-                let logroTag = p.logro ? p.logro.toUpperCase() : 'GENERAL';
-
-                let badgeClass = 'status-pending';
-                if(p.estatus === 'win') badgeClass = 'status-win';
-                if(p.estatus === 'lose') badgeClass = 'status-lose';
-
-                const itemHTML = `
-                    <div class="item-list">
-                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
-                        <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Cuota: ${logroTag}</span><br>
-                        <b>[${deporte}]</b> ${p.titulo || 'Sin título'}<br>
-                        ${p.detalles ? `<span style="color:#aaa; font-size:11px;">${p.detalles}</span>` : ''}
-                        <div class="btn-group">
-                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
-                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
-                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PEND</button>
-                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️</button>
-                        </div>
-                    </div>
-                `;
-
-                if(esReciente) {
-                    totalActivos++;
-                    active24hList.innerHTML += itemHTML;
-                }
-
-                if(!deportesMap[deporte]) deportesMap[deporte] = { logros: {}, items: [] };
-                deportesMap[deporte].items.push(itemHTML);
-
-                if(!deportesMap[deporte].logros[logroTag]) deportesMap[deporte].logros[logroTag] = { win: 0, lose: 0, total: 0 };
-
-                if(p.estatus === 'win') {
-                    deportesMap[deporte].logros[logroTag].win++;
-                    deportesMap[deporte].logros[logroTag].total++;
-                } else if(p.estatus === 'lose') {
-                    deportesMap[deporte].logros[logroTag].lose++;
-                    deportesMap[deporte].logros[logroTag].total++;
-                }
-            });
-
-            if(totalActivos === 0) {
-                active24hList.innerHTML = '<p style="font-size:11px; color:#777;">Sin pronósticos en las últimas 24h.</p>';
-            }
-
-            for(const dep in deportesMap) {
-                const depData = deportesMap[dep];
-                let logrosHTML = '<div class="logros-row">';
-                let tieneMetricas = false;
-
-                for(const lg in depData.logros) {
-                    const lStats = depData.logros[lg];
-                    if(lStats.total > 0) {
-                        tieneMetricas = true;
-                        const pct = ((lStats.win / lStats.total) * 100).toFixed(0);
-                        logrosHTML += `
-                            <div class="logro-chip">
-                                <span class="logro-name">${lg}:</span>
-                                <span class="logro-pct">${pct}%</span>
-                            </div>
-                        `;
-                    }
-                }
-
-                if(!tieneMetricas) logrosHTML += '<span style="font-size:10px; color:#666;">Sin métricas.</span>';
-                logrosHTML += '</div>';
-
-                const sportSlug = dep.replace(/\s+/g, '_');
-
-                accordionContainer.innerHTML += `
-                    <div class="sport-accordion">
-                        <button class="sport-header-btn" onclick="toggleDeporte('${sportSlug}')">
-                            <span>${dep} (${depData.items.length})</span>
-                            <span>▼</span>
-                        </button>
-                        <div id="content_${sportSlug}" class="sport-content">
-                            ${logrosHTML}
-                            ${depData.items.join('')}
-                        </div>
-                    </div>
-                `;
-            }
-        }, (err) => console.log("Error cargando pronósticos:", err));
+        });
     }
 
-    function toggleDeporte(slug) {
-        const target = document.getElementById(`content_${slug}`);
-        if(target) target.classList.toggle('open');
+    function guardarConfigGeneral() {
+        const logo = document.getElementById('logoUrl').value.trim();
+        const ws = document.getElementById('wsNum').value.trim();
+        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
+        .then(() => alert("✔ Logo y WhatsApp guardados."));
     }
 
-    function cambiarEstatus(id, nuevoEstatus) {
-        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
-    }
-
-    function eliminarPronostico(id) {
-        if(confirm("¿Eliminar este pronóstico?")) db.collection("pronosticos").doc(id).delete();
+    function guardarConfigPagos() {
+        const pm = document.getElementById('pmData').value.trim();
+        const binance = document.getElementById('binanceData').value.trim();
+        const otros = document.getElementById('otrosData').value.trim();
+        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
+        .then(() => alert("✔ Métodos de pago guardados."));
     }
 
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
         const titulo = document.getElementById('postTitle').value.trim();
-        let logro = document.getElementById('postLogro').value.trim().toUpperCase() || 'GENERAL';
+        const logro = document.getElementById('postLogro').value.trim().toUpperCase() || 'GENERAL';
         const detalles = document.getElementById('postDetails').value.trim();
         
-        if(!titulo) return alert("Ingresa un título.");
+        if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
         db.collection("pronosticos").add({
             categoria: cat,
@@ -331,52 +175,116 @@
             estatus: "pendiente",
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            alert("🚀 Publicado.");
+            alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postLogro').value = '';
             document.getElementById('postDetails').value = '';
-        }).catch(e => alert("Error: " + e.message));
+        });
     }
 
-    function enviarNotificacion() {
-        const titulo = document.getElementById('notifTitle').value.trim();
-        const mensaje = document.getElementById('notifBody').value.trim();
-        if(!titulo || !mensaje) return alert("Escribe título y mensaje.");
+    if (typeof db !== 'undefined') {
+        // LECTURA ORDENADA MANUALMENTE (EVITA FALLOS DE ÍNDICE EN FIRESTORE)
+        db.collection("pronosticos").onSnapshot((snapshot) => {
+            const list = document.getElementById('adminPostsList');
+            list.innerHTML = '';
 
-        db.collection("notificaciones").add({
-            titulo: titulo,
-            mensaje: mensaje,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            alert("🔔 Notificación enviada.");
-            document.getElementById('notifTitle').value = '';
-            document.getElementById('notifBody').value = '';
-        }).catch(e => alert("Error al enviar notificación: " + e.message));
+            if(snapshot.empty) {
+                list.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
+                return;
+            }
+
+            let posts = [];
+            snapshot.forEach((doc) => posts.push({ id: doc.id, ...doc.data() }));
+            posts.sort((a, b) => obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha));
+
+            posts.forEach((p) => {
+                const id = p.id;
+                let badgeClass = 'status-pending';
+                if(p.estatus === 'win') badgeClass = 'status-win';
+                if(p.estatus === 'lose') badgeClass = 'status-lose';
+
+                list.innerHTML += `
+                    <div class="item-list">
+                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
+                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
+                        <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Cuota: ${p.logro || 'GENERAL'}</span><br>
+                        <b>[${p.categoria}]</b> ${p.titulo}
+                        <div style="color:#ccc; font-size:11px; margin-top:4px;">${p.detalles || ''}</div>
+                        <div class="btn-group">
+                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
+                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
+                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
+                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        db.collection("claves").onSnapshot((snapshot) => {
+            const userList = document.getElementById('adminUsersList');
+            userList.innerHTML = '';
+
+            if(snapshot.empty) {
+                userList.innerHTML = '<p style="font-size:11px; color:#777;">No hay claves registradas.</p>';
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const keyId = doc.id;
+                const u = doc.data();
+
+                userList.innerHTML += `
+                    <div class="item-list">
+                        <b>Cliente:</b> ${u.cliente} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
+                        <b>Estado:</b> <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'ACTIVO (VIP)' : 'INACTIVO'}</span>
+                        <div class="btn-group">
+                            <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${keyId}', ${!u.activa})">
+                                ${u.activa ? '🚫 Quitar Acceso' : '✔ Dar Acceso'}
+                            </button>
+                            <button class="btn-sm" style="background:#444;" onclick="eliminarClave('${keyId}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function cambiarEstatus(id, nuevoEstatus) {
+        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
+    }
+
+    function eliminarPronostico(id) {
+        if(confirm("¿Seguro de eliminar este pronóstico?")) {
+            db.collection("pronosticos").doc(id).delete().then(() => {
+                alert("🗑️ Pronóstico eliminado con éxito.");
+            });
+        }
     }
 
     function guardarClave() {
         const cliente = document.getElementById('clientName').value.trim();
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
-        if(!cliente || !clave) return alert("Completa los datos.");
+        if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
 
         db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
-        .then(() => alert(`✔ Clave ${clave} activada.`));
+        .then(() => {
+            alert(`✔ Clave ${clave} creada y activada.`);
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientKey').value = '';
+        });
     }
 
-    function guardarConfigGeneral() {
-        db.collection("configuracion").doc("general").set({
-            logoUrl: document.getElementById('logoUrl').value.trim(),
-            whatsapp: document.getElementById('wsNum').value.trim()
-        }, { merge: true }).then(() => alert("✔ Guardado."));
+    function alternarAcceso(clave, nuevoEstado) {
+        db.collection("claves").doc(clave).update({ activa: nuevoEstado });
     }
 
-    function guardarConfigPagos() {
-        db.collection("configuracion").doc("pagos").set({
-            pagoMovil: document.getElementById('pmData').value.trim(),
-            binance: document.getElementById('binanceData').value.trim(),
-            otros: document.getElementById('otrosData').value.trim()
-        }, { merge: true }).then(() => alert("✔ Guardado."));
+    function eliminarClave(clave) {
+        if(confirm(`¿Seguro que deseas eliminar la clave ${clave}?`)) {
+            db.collection("claves").doc(clave).delete();
+        }
     }
 </script>
 </body>
-</html>
+                                                                          </html>
+                                                                          
