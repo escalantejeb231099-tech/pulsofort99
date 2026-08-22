@@ -27,6 +27,15 @@
         .status-lose { background: #b71c1c; color: #fff; }
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        .cuota-badge { background: #1a237e; color: #90caf9; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+
+        /* Estilos del Acordeón */
+        details { background: #181818; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+        summary { padding: 12px; font-size: 13px; font-weight: bold; color: var(--gold); cursor: pointer; background: #222; display: flex; justify-content: space-between; align-items: center; }
+        summary::after { content: "►"; font-size: 10px; color: #aaa; }
+        details[open] summary::after { content: "▼"; color: var(--gold); }
+        .accordion-content { padding: 10px; }
+        .stats-box { background: #111; padding: 8px; border-radius: 6px; margin-bottom: 10px; border: 1px dashed var(--gold); font-size: 11px; }
     </style>
 </head>
 <body>
@@ -55,6 +64,9 @@
             <option value="COMBINADA">COMBINADA (PARLAY)</option>
         </select>
 
+        <label>Cuota / Momio (Opcional):</label>
+        <input type="text" id="postCuota" placeholder="Ej: Alta 8.5, -120, Runline +1.5">
+
         <label>Título / Partido:</label>
         <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
@@ -64,10 +76,10 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. GESTIONAR PRONÓSTICOS -->
+    <!-- 2. GESTIONAR PRONÓSTICOS (ORGANIZADOS EN ACORDEÓN) -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en cada deporte para desplegar las jugadas.</p>
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
@@ -144,6 +156,7 @@
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
+        const cuota = document.getElementById('postCuota').value.trim();
         const titulo = document.getElementById('postTitle').value.trim();
         const detalles = document.getElementById('postDetails').value.trim();
         if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
@@ -151,6 +164,7 @@
         db.collection("pronosticos").add({
             categoria: cat,
             tipo: tipo,
+            cuota: cuota || 'GENERAL',
             titulo: titulo,
             detalles: detalles,
             estatus: "pendiente",
@@ -159,9 +173,11 @@
             alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postDetails').value = '';
+            document.getElementById('postCuota').value = '';
         });
     }
 
+    // CARGA CON ESTRUCTURA DE ACORDEÓN POR DEPORTE
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const list = document.getElementById('adminPostsList');
         list.innerHTML = '';
@@ -171,25 +187,69 @@
             return;
         }
 
+        let deportes = {};
+
         snapshot.forEach((doc) => {
             const id = doc.id;
             const p = doc.data();
-            let badgeClass = 'status-pending';
-            if(p.estatus === 'win') badgeClass = 'status-win';
-            if(p.estatus === 'lose') badgeClass = 'status-lose';
+            const cat = p.categoria || 'VARIOS';
+
+            if(!deportes[cat]) deportes[cat] = { items: [], momios: {} };
+
+            deportes[cat].items.push({ id: id, ...p });
+
+            // Estadísticas por Momio
+            const momio = p.cuota || 'GENERAL';
+            if(!deportes[cat].momios[momio]) deportes[cat].momios[momio] = { wins: 0, loses: 0 };
+            if(p.estatus === 'win') deportes[cat].momios[momio].wins++;
+            if(p.estatus === 'lose') deportes[cat].momios[momio].loses++;
+        });
+
+        Object.keys(deportes).forEach((cat) => {
+            const grupo = deportes[cat];
+            let itemsHtml = '';
+            let momiosHtml = '';
+
+            Object.keys(grupo.momios).forEach((mKey) => {
+                const w = grupo.momios[mKey].wins;
+                const l = grupo.momios[mKey].loses;
+                const total = w + l;
+                const efec = total > 0 ? ((w / total) * 100).toFixed(0) : 0;
+                momiosHtml += `<div>• Momio <b>${mKey}</b>: <span style="color:#4caf50;">${w}W</span> - <span style="color:#f44336;">${l}L</span> (<b style="color:var(--gold);">${efec}%</b>)</div>`;
+            });
+
+            grupo.items.forEach((p) => {
+                let badgeClass = 'status-pending';
+                if(p.estatus === 'win') badgeClass = 'status-win';
+                if(p.estatus === 'lose') badgeClass = 'status-lose';
+
+                itemsHtml += `
+                    <div class="item-list">
+                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
+                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
+                        ${p.cuota ? `<span class="cuota-badge">${p.cuota}</span>` : ''}<br>
+                        <b>${p.titulo}</b>
+                        <div class="btn-group">
+                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">🟢 WIN</button>
+                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">🔴 LOSE</button>
+                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${p.id}', 'pendiente')">⏳ PEND</button>
+                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️ Borrar</button>
+                        </div>
+                    </div>
+                `;
+            });
 
             list.innerHTML += `
-                <div class="item-list">
-                    <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span><br>
-                    <b>[${p.categoria}]</b> ${p.titulo}
-                    <div class="btn-group">
-                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
-                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
+                <details>
+                    <summary>${cat} (${grupo.items.length})</summary>
+                    <div class="accordion-content">
+                        <div class="stats-box">
+                            <b style="color:var(--gold);">📈 Efectividad en ${cat}:</b>
+                            ${momiosHtml || '<div style="color:#777;">Sin cierres aún.</div>'}
+                        </div>
+                        ${itemsHtml}
                     </div>
-                </div>
+                </details>
             `;
         });
     });
@@ -258,4 +318,5 @@
     }
 </script>
 </body>
-</html>
+                                                                                    </html>
+    
