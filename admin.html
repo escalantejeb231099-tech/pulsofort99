@@ -28,8 +28,10 @@
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         
-        .sport-header { font-size: 11px; font-weight: bold; color: var(--gold); margin: 12px 0 6px 0; border-bottom: 1px dashed #444; padding-bottom: 4px; text-transform: uppercase; }
-        .stat-badge { background: #333; padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+        /* HEADER HORIZONTAL POR DEPORTE CON EFECTIVIDAD EN LÍNEA */
+        .sport-bar { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 8px 12px; border-radius: 6px; margin: 12px 0 8px 0; border-left: 4px solid var(--gold); }
+        .sport-title { font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; }
+        .sport-eff { font-size: 11px; font-weight: 800; color: var(--gold); background: #121212; padding: 3px 8px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -61,8 +63,8 @@
         <label>Título / Partido:</label>
         <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
-        <label>Detalles del Pronóstico (Especifica el logro ej: Yankee -140):</label>
-        <textarea id="postDetails" rows="3" placeholder="Ej: Yankees a ganar (-140) / Runline -1.5"></textarea>
+        <label>Detalles del Pronóstico:</label>
+        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada / Logro (Ej: Yankees -140)"></textarea>
         
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
@@ -70,31 +72,22 @@
     <!-- 2. PRONÓSTICOS ACTIVOS (ÚLTIMAS 24 HORAS) -->
     <div class="card">
         <h3>📊 Pronósticos Activos (Últimas 24h)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos vigentes del día. Al cumplir 24h se archivan automáticamente por deporte.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Cumplidas las 24h pasan al histórico por deporte.</p>
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
     </div>
 
-    <!-- 3. HISTÓRICO GUARDADO POR DEPORTE (> 24 HORAS) -->
+    <!-- 3. HISTÓRICO Y EFECTIVIDAD HORIZONTAL POR DEPORTE -->
     <div class="card">
-        <h3>📂 Histórico de Pronósticos por Deporte</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos archivados pasadas las 24h organizados según su categoría.</p>
+        <h3>📂 Histórico y Aciertos por Deporte</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Organizado por deporte con su % de efectividad de logros a la derecha.</p>
         <div id="archivedPostsList">
             <p style="font-size:11px; color:#777;">Cargando histórico...</p>
         </div>
     </div>
 
-    <!-- 4. ESTADÍSTICAS POR LOGRO -->
-    <div class="card">
-        <h3>📈 Efectividad y % de Aciertos por Logro</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Rendimiento general agrupado por el logro o jugada cargada.</p>
-        <div id="statsByLogroList">
-            <p style="font-size:11px; color:#777;">Calculando estadísticas...</p>
-        </div>
-    </div>
-
-    <!-- 5. ACTIVAR Y CONTROLAR USUARIOS VIP -->
+    <!-- 4. ACTIVAR Y CONTROLAR USUARIOS VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
@@ -107,7 +100,7 @@
         </div>
     </div>
 
-    <!-- 6. CONFIGURACIONES GENERALES -->
+    <!-- 5. CONFIGURACIONES GENERALES -->
     <div class="card">
         <h3>🖼️ Configurar Logo y WhatsApp</h3>
         <label>URL del Logo:</label>
@@ -117,7 +110,7 @@
         <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
     </div>
 
-    <!-- 7. CONFIGURAR MÉTODOS DE PAGO -->
+    <!-- 6. CONFIGURAR MÉTODOS DE PAGO -->
     <div class="card">
         <h3>💳 Configurar Métodos de Pago</h3>
         <label>Pago Móvil:</label>
@@ -183,20 +176,17 @@
         });
     }
 
-    // OBTENER PRONÓSTICOS Y FILTRAR POR 24 HORAS + HISTÓRICO + ESTADÍSTICAS POR LOGRO
+    // LISTAR ACTIVOS (<24H) E HISTÓRICO CON EFECTIVIDAD HORIZONTAL POR DEPORTE
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const listActive = document.getElementById('adminPostsList');
         const listArchived = document.getElementById('archivedPostsList');
-        const statsList = document.getElementById('statsByLogroList');
         
         listActive.innerHTML = '';
         listArchived.innerHTML = '';
-        statsList.innerHTML = '';
 
         if(snapshot.empty) {
             listActive.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos activos.</p>';
             listArchived.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos archivados.</p>';
-            statsList.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos registrados.</p>';
             return;
         }
 
@@ -205,7 +195,7 @@
 
         let totalActivos = 0;
         let archivadosPorDeporte = {};
-        let estadisticasLogro = {};
+        let statsPorDeporte = {};
 
         snapshot.forEach((doc) => {
             const id = doc.id;
@@ -222,7 +212,7 @@
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
                     <span class="type-badge">${p.tipo || 'DIRECTA'}</span><br>
                     <b>[${p.categoria}]</b> ${p.titulo}<br>
-                    <span style="color:#aaa; font-size:11px;">Jugada/Logro: ${p.detalles}</span>
+                    <span style="color:#aaa; font-size:11px;">Detalles: ${p.detalles}</span>
                     <div class="btn-group">
                         <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
                         <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
@@ -240,17 +230,16 @@
                 archivadosPorDeporte[p.categoria].push(itemHTML);
             }
 
-            // ACUMULAR ESTADÍSTICAS POR LOGRO (MUESTRA DETALLES/JUGADA)
-            const logroKey = p.detalles ? p.detalles.trim().toUpperCase() : "GENERAL";
-            if(!estadisticasLogro[logroKey]) {
-                estadisticasLogro[logroKey] = { win: 0, lose: 0, total: 0 };
+            // CONTABILIZAR ACIERTOS POR DEPORTE
+            if(!statsPorDeporte[p.categoria]) {
+                statsPorDeporte[p.categoria] = { win: 0, lose: 0, total: 0 };
             }
             if(p.estatus === 'win') {
-                estadisticasLogro[logroKey].win++;
-                estadisticasLogro[logroKey].total++;
+                statsPorDeporte[p.categoria].win++;
+                statsPorDeporte[p.categoria].total++;
             } else if(p.estatus === 'lose') {
-                estadisticasLogro[logroKey].lose++;
-                estadisticasLogro[logroKey].total++;
+                statsPorDeporte[p.categoria].lose++;
+                statsPorDeporte[p.categoria].total++;
             }
         });
 
@@ -258,40 +247,24 @@
             listActive.innerHTML = '<p style="font-size:11px; color:#777;">Sin pronósticos en las últimas 24h.</p>';
         }
 
-        // RENDERIZAR HISTÓRICO ORGANIZADO POR DEPORTE
+        // RENDERIZAR HISTÓRICO Y BARRA HORIZONTAL CON EFECTIVIDAD POR DEPORTE
         if(Object.keys(archivadosPorDeporte).length === 0) {
             listArchived.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos con más de 24 horas.</p>';
         } else {
             for(const dep in archivadosPorDeporte) {
-                listArchived.innerHTML += `<div class="sport-header">${dep}</div>`;
+                const st = statsPorDeporte[dep] || { win: 0, total: 0 };
+                const pct = st.total > 0 ? ((st.win / st.total) * 100).toFixed(1) + '%' : 'N/A';
+
+                listArchived.innerHTML += `
+                    <div class="sport-bar">
+                        <span class="sport-title">${dep}</span>
+                        <span class="sport-eff">🎯 ${pct} (${st.win}W/${st.total} JUGADAS)</span>
+                    </div>
+                `;
                 archivadosPorDeporte[dep].forEach(html => {
                     listArchived.innerHTML += html;
                 });
             }
-        }
-
-        // RENDERIZAR ESTADÍSTICAS POR LOGRO (INDEPENDIENTE DEL DEPORTE)
-        let tieneEstadisticas = false;
-        for(const logro in estadisticasLogro) {
-            const st = estadisticasLogro[logro];
-            if(st.total > 0) {
-                tieneEstadisticas = true;
-                const porcentaje = ((st.win / st.total) * 100).toFixed(1);
-                statsList.innerHTML += `
-                    <div class="stat-badge">
-                        <div>
-                            <b>${logro}</b><br>
-                            <span style="font-size:10px; color:#aaa;">Resultados: ${st.win}W / ${st.lose}L</span>
-                        </div>
-                        <div style="font-size:13px; font-weight:800; color:${porcentaje >= 50 ? 'var(--green)' : '#b71c1c'};">
-                            ${porcentaje}%
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        if(!tieneEstadisticas) {
-            statsList.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos cerrados (WIN/LOSE) para calcular aciertos.</p>';
         }
     });
 
@@ -359,4 +332,5 @@
     }
 </script>
 </body>
-</html>
+    </html>
+    
