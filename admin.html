@@ -19,14 +19,15 @@
         .btn-green { background: var(--green); }
         .btn-orange { background: #e65100; }
         
-        /* NAVEGACIÓN HORIZONTAL DE DEPORTES (FILTROS) */
-        .sports-nav { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; scrollbar-width: thin; }
-        .sport-btn { background: #2a2a2a; border: 1px solid #444; border-radius: 20px; padding: 8px 14px; white-space: nowrap; font-size: 11px; font-weight: bold; color: #ccc; width: auto; cursor: pointer; }
-        .sport-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
+        /* BOTONES DE DEPORTES CON INTERFAZ DESPLEGABLE */
+        .sport-accordion { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+        .sport-header-btn { width: 100%; background: #222; color: var(--gold); padding: 12px; font-weight: 800; font-size: 12px; text-align: left; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 0; margin: 0; }
+        .sport-header-btn:hover { background: #2d2d2d; }
+        .sport-content { display: none; padding: 10px; background: #181818; }
+        .sport-content.open { display: block; }
 
-        /* MÉTIRCA Y LOGROS HORIZONTALES */
-        .stats-box { background: #181818; border: 1px solid #333; border-radius: 8px; padding: 10px; margin-bottom: 12px; }
-        .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-top: 6px; scrollbar-width: thin; }
+        /* CARRUSEL HORIZONTAL DE ESTADÍSTICAS DE CUOTAS / MOMIOS */
+        .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: thin; }
         .logro-chip { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 6px 10px; white-space: nowrap; font-size: 10px; flex-shrink: 0; }
         .logro-name { font-weight: bold; color: #fff; }
         .logro-pct { font-weight: 800; color: var(--gold); margin-left: 4px; }
@@ -68,13 +69,13 @@
         </select>
 
         <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Real Madrid vs Barcelona / 5ta Válida">
+        <input type="text" id="postTitle" placeholder="Ej: Real Madrid vs Barcelona">
         
-        <label>Logro / Cuota (Ej: -140, +110, RUNLINE, ALTA):</label>
-        <input type="text" id="postLogro" placeholder="Ej: -140">
+        <label>Logro / Cuota / Momio (Ej: -140, -149, Runline):</label>
+        <input type="text" id="postLogro" placeholder="Ej: -149">
         
         <label>Detalles Completos del Pronóstico:</label>
-        <textarea id="postDetails" rows="2" placeholder="Escribe los detalles (ej. Ganador Real Madrid -140)..."></textarea>
+        <textarea id="postDetails" rows="2" placeholder="Ej: Real Madrid a ganar cuota -149"></textarea>
         
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
@@ -82,38 +83,18 @@
     <!-- 2. PANTALLA PRINCIPAL: PRONÓSTICOS ÚLTIMAS 24 HORAS -->
     <div class="card">
         <h3>🔥 Inicio: Pronósticos Recientes (24h)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Vista activa limpia del día actual.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Al pasar las 24h se archivan automáticamente en el histórico.</p>
         <div id="active24hList">
             <p style="font-size:11px; color:#777;">Cargando pronósticos activos...</p>
         </div>
     </div>
 
-    <!-- 3. SECCIÓN HISTÓRICA CON BOTONES DE DEPORTES Y PROMEDIO DE LOGROS -->
+    <!-- 3. ARCHIVO HISTÓRICO POR DEPORTE (ACORDEÓN OCULTO/DESPLEGABLE) -->
     <div class="card">
         <h3>📂 Archivo Histórico por Deporte</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en un deporte para ver sus jugadas y el % de aciertos por logro/cuota detectado.</p>
-        
-        <!-- BOTONES DE SELECCIÓN DE DEPORTE -->
-        <div class="sports-nav">
-            <button class="sport-btn active" onclick="filtrarDeporte('TODOS', this)">🌐 TODOS</button>
-            <button class="sport-btn" onclick="filtrarDeporte('FUTBOL', this)">⚽ FÚTBOL</button>
-            <button class="sport-btn" onclick="filtrarDeporte('MLB', this)">⚾ MLB</button>
-            <button class="sport-btn" onclick="filtrarDeporte('CARRERAS DE CABALLOS', this)">🐎 CABALLOS</button>
-            <button class="sport-btn" onclick="filtrarDeporte('NBA', this)">🏀 NBA</button>
-            <button class="sport-btn" onclick="filtrarDeporte('NFL', this)">🏈 NFL</button>
-        </div>
-
-        <!-- MÉTRICAS DE ACIERTOS POR CUOTA/LOGRO DE ESE DEPORTE -->
-        <div class="stats-box">
-            <div style="font-size:11px; font-weight:bold; color:var(--gold);">Métricas de Acierto por Logro/Cuota:</div>
-            <div id="logrosStatsRow" class="logros-row">
-                <span style="font-size:10px; color:#666;">Selecciona un deporte para ver estadísticas.</span>
-            </div>
-        </div>
-
-        <!-- CONTENEDOR DE JUEGOS DEL DEPORTE SELECCIONADO -->
-        <div id="sportGamesContainer">
-            <p style="font-size:11px; color:#777;">Cargando historial...</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en un deporte para desplegar las cuotas/momios y sus juegos.</p>
+        <div id="sportsAccordionContainer">
+            <p style="font-size:11px; color:#777;">Cargando deportes...</p>
         </div>
     </div>
 
@@ -148,9 +129,6 @@
 
 <script src="firebase-config.js"></script>
 <script>
-    let globalPronosticos = [];
-    let deporteActual = 'TODOS';
-
     // CARGAR CONFIGURACIONES
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
@@ -179,7 +157,7 @@
             pagoMovil: document.getElementById('pmData').value.trim(),
             binance: document.getElementById('binanceData').value.trim(),
             otros: document.getElementById('otrosData').value.trim()
-        }, { merge: true }).then(() => alert("✔ Pagos guardados con éxito."));
+        }, { merge: true }).then(() => alert("✔ Métodos guardados con éxito."));
     }
 
     function publicarPronostico() {
@@ -191,7 +169,7 @@
         
         if(!titulo) return alert("Ingresa un título para el partido.");
 
-        // EXTRAER CUOTA/LOGRO AUTOMÁTICAMENTE DEL TEXTO SI NO SE ESPECIFICA
+        // DETECTAR AUTOMÁTICAMENTE LA CUOTA/MOMIO DE LOS DETALLES SI NO SE INDICA
         if(!logro && detalles) {
             const match = detalles.match(/(-|\+)?\d{3,4}/);
             if(match) logro = match[0];
@@ -216,32 +194,32 @@
 
     // LISTENER EN TIEMPO REAL
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        globalPronosticos = [];
-        snapshot.forEach(doc => {
-            globalPronosticos.push({ id: doc.id, ...doc.data() });
-        });
-        renderizarVista();
-    });
-
-    function renderizarVista() {
         const active24hList = document.getElementById('active24hList');
-        const sportGamesContainer = document.getElementById('sportGamesContainer');
-        const logrosStatsRow = document.getElementById('logrosStatsRow');
+        const accordionContainer = document.getElementById('sportsAccordionContainer');
 
         active24hList.innerHTML = '';
-        sportGamesContainer.innerHTML = '';
+        accordionContainer.innerHTML = '';
+
+        if(snapshot.empty) {
+            active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos registrados.</p>';
+            accordionContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay histórico.</p>';
+            return;
+        }
 
         const ahora = new Date().getTime();
         const limite24h = 24 * 60 * 60 * 1000;
 
         let totalActivos = 0;
-        let statsLogros = {};
+        let deportesMap = {};
 
-        globalPronosticos.forEach((p) => {
+        snapshot.forEach((doc) => {
+            const id = doc.id;
+            const p = doc.data();
             const fechaPost = p.fecha ? p.fecha.toDate().getTime() : ahora;
             const esReciente = (ahora - fechaPost) <= limite24h;
-            
-            // LECTURA DE LOGRO (EN CAMPO O EN DETALLES)
+            const deporte = p.categoria || "VARIOS";
+
+            // EXTRAER Y CLASIFICAR EL MOMIO/CUOTA (EJ: -140, -149, RUNLINE, ETC)
             let logroTag = p.logro ? p.logro.toUpperCase() : 'GENERAL';
             if((logroTag === 'GENERAL' || !logroTag) && p.detalles) {
                 const match = p.detalles.match(/(-|\+)?\d{3,4}/);
@@ -256,39 +234,41 @@
                 <div class="item-list">
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
                     <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
-                    <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Logro: ${logroTag}</span><br>
+                    <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Cuota/Momio: ${logroTag}</span><br>
                     <b>[${p.categoria}]</b> ${p.titulo}<br>
                     ${p.detalles ? `<span style="color:#aaa; font-size:11px;">${p.detalles}</span>` : ''}
                     <div class="btn-group">
-                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">🟢 WIN</button>
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">🔴 LOSE</button>
-                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${p.id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️</button>
+                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
+                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
+                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
+                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️</button>
                     </div>
                 </div>
             `;
 
-            // 1. PANTALLA PRINCIPAL (<24H)
+            // 1. INICIO (MUESTRA SOLO ÚLTIMAS 24 HOURS)
             if(esReciente) {
                 totalActivos++;
                 active24hList.innerHTML += itemHTML;
             }
 
-            // 2. FILTRADO POR DEPORTE EN EL ARCHIVO
-            if(deporteActual === 'TODOS' || p.categoria === deporteActual) {
-                sportGamesContainer.innerHTML += itemHTML;
+            // 2. AGRUPAR POR DEPORTE Y POR CUOTA/MOMIO PARA EL ARCHIVO OCULTO
+            if(!deportesMap[deporte]) {
+                deportesMap[deporte] = { logros: {}, items: [] };
+            }
 
-                // CÁLCULO DE PROMEDIO DE EFECTIVIDAD POR LOGRO
-                if(!statsLogros[logroTag]) {
-                    statsLogros[logroTag] = { win: 0, lose: 0, total: 0 };
-                }
-                if(p.estatus === 'win') {
-                    statsLogros[logroTag].win++;
-                    statsLogros[logroTag].total++;
-                } else if(p.estatus === 'lose') {
-                    statsLogros[logroTag].lose++;
-                    statsLogros[logroTag].total++;
-                }
+            deportesMap[deporte].items.push(itemHTML);
+
+            if(!deportesMap[deporte].logros[logroTag]) {
+                deportesMap[deporte].logros[logroTag] = { win: 0, lose: 0, total: 0 };
+            }
+
+            if(p.estatus === 'win') {
+                deportesMap[deporte].logros[logroTag].win++;
+                deportesMap[deporte].logros[logroTag].total++;
+            } else if(p.estatus === 'lose') {
+                deportesMap[deporte].logros[logroTag].lose++;
+                deportesMap[deporte].logros[logroTag].total++;
             }
         });
 
@@ -296,38 +276,58 @@
             active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos enviados en las últimas 24 horas.</p>';
         }
 
-        // MOSTRAR ACIERTOS Y PROMEDIO HORIZONTAL
-        logrosStatsRow.innerHTML = '';
-        let tieneMetricas = false;
-        for(const lg in statsLogros) {
-            const st = statsLogros[lg];
-            if(st.total > 0) {
-                tieneMetricas = true;
-                const pct = ((st.win / st.total) * 100).toFixed(0);
-                logrosStatsRow.innerHTML += `
-                    <div class="logro-chip">
-                        <span class="logro-name">${lg}:</span>
-                        <span class="logro-pct">${pct}%</span>
-                        <span style="color:#888; font-size:9px;">(${st.win}W / ${st.lose}L)</span>
-                    </div>
-                `;
+        // RENDERIZAR ESTRUCTURA DE ACORDEÓN OCULTA POR DEPORTE
+        for(const dep in deportesMap) {
+            const depData = deportesMap[dep];
+            
+            // CONSTRUIR ESTADÍSTICAS HORIZONTALES POR CUOTA/MOMIO
+            let logrosHTML = '<div class="logros-row">';
+            let tieneMetricas = false;
+
+            for(const lg in depData.logros) {
+                const lStats = depData.logros[lg];
+                if(lStats.total > 0) {
+                    tieneMetricas = true;
+                    const pct = ((lStats.win / lStats.total) * 100).toFixed(0);
+                    logrosHTML += `
+                        <div class="logro-chip">
+                            <span class="logro-name">${lg}:</span>
+                            <span class="logro-pct">${pct}%</span>
+                            <span style="color:#888; font-size:9px;">(${lStats.win}W / ${lStats.lose}L)</span>
+                        </div>
+                    `;
+                }
             }
-        }
 
-        if(!tieneMetricas) {
-            logrosStatsRow.innerHTML = '<span style="font-size:10px; color:#666;">Sin jugadas evaluadas (WIN/LOSE) en este deporte.</span>';
-        }
+            if(!tieneMetricas) {
+                logrosHTML += '<span style="font-size:10px; color:#666;">Sin resultados evaluados (WIN/LOSE).</span>';
+            }
+            logrosHTML += '</div>';
 
-        if(sportGamesContainer.innerHTML === '') {
-            sportGamesContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay juegos guardados para este deporte.</p>';
-        }
-    }
+            const sportSlug = dep.replace(/\s+/g, '_');
 
-    function filtrarDeporte(deporte, btn) {
-        deporteActual = deporte;
-        document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderizarVista();
+            accordionContainer.innerHTML += `
+                <div class="sport-accordion">
+                    <button class="sport-header-btn" onclick="toggleDeporte('${sportSlug}')">
+                        <span>${dep} (${depData.items.length})</span>
+                        <span>▼</span>
+                    </button>
+                    <div id="content_${sportSlug}" class="sport-content">
+                        <div style="font-size:10px; color:var(--gold); font-weight:bold; margin-bottom:4px;">% Acierto por Cuota/Momio:</div>
+                        ${logrosHTML}
+                        <div style="font-size:10px; color:#aaa; margin-bottom:6px;">Juegos Registrados:</div>
+                        ${depData.items.join('')}
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    function toggleDeporte(slug) {
+        const target = document.getElementById(`content_${slug}`);
+        if(target) {
+            target.classList.toggle('open');
+        }
     }
 
     function cambiarEstatus(id, nuevoEstatus) {
