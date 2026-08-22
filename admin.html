@@ -3,40 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - PulsoFort99</title>
+    <title>PulsoFort99 - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <style>
-        :root { --red: #d32f2f; --dark: #121212; --card: #1e1e1e; --gold: #ffc107; --green: #2e7d32; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-        body { background: var(--dark); color: #fff; padding: 15px; padding-bottom: 50px; }
-        .container { max-width: 500px; margin: 0 auto; }
-        .header { text-align: center; padding: 15px 0 10px; border-bottom: 2px solid var(--red); margin-bottom: 15px; }
+        :root { --red: #d32f2f; --green: #2e7d32; --gold: #ffc107; --dark: #121212; --card: #1e1e1e; }
+        body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
+        .container { max-width: 480px; margin: 0 auto; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
         h3 { font-size: 14px; color: var(--gold); margin-bottom: 10px; }
-        
-        input, select, textarea, button { width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; }
-        textarea { height: 70px; resize: none; }
-        button { background: var(--red); color: #fff; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; font-size: 13px; }
+        label { font-size: 11px; color: #ccc; }
+        input, textarea, select, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
+        button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
         .btn-green { background: var(--green); }
-        .btn-gold { background: var(--gold); color: #000; }
-        .btn-delete { background: #b71c1c; padding: 4px 8px; font-size: 10px; width: auto; margin-top: 0; }
-        .btn-status { width: auto; padding: 4px 8px; font-size: 10px; margin-top: 0; display: inline-block; }
+        .btn-orange { background: #e65100; }
         
-        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 11px; margin-top: 8px; cursor: pointer; }
-        .checkbox-label input { width: auto; margin: 0; }
+        .item-list { background: #262626; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--gold); font-size: 12px; }
+        .btn-group { display: flex; gap: 5px; margin-top: 8px; }
+        .btn-sm { padding: 6px 10px; font-size: 10px; width: auto; flex: 1; margin: 0; }
+        .tag-status { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
+        .status-win { background: var(--green); color: #fff; }
+        .status-lose { background: #b71c1c; color: #fff; }
+        .status-pending { background: #ff9800; color: #000; }
+        .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
 
-        /* ACORDEÓN POR DEPORTE */
+        /* ESTILOS ACORDEÓN POR DEPORTE */
         .accordion-item { background: #181818; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
-        .accordion-header { padding: 12px; background: #242424; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--gold); }
+        .accordion-header { padding: 10px 12px; background: #242424; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--gold); }
         .accordion-content { display: none; padding: 10px; background: #1a1a1a; }
         .accordion-content.open { display: block; }
-
-        .post-item { background: #222; border: 1px solid #333; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
-        .post-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 5px; }
-        .tag { background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; }
-        
         .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 4px 0; border-bottom: 1px solid #282828; }
         .stat-row:last-child { border-bottom: none; }
     </style>
@@ -44,84 +40,134 @@
 <body>
 
 <div class="container">
-    <div class="header">
-        <h2>⚙️ PANEL DE CONTROL</h2>
-        <p style="font-size:11px; color:#aaa;">PulsoFort99 - Gestión de Pronósticos</p>
+    <div style="background:var(--red); color:white; text-align:center; padding:12px; border-radius:8px; margin-bottom:15px;">
+        <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
     </div>
 
-    <!-- PUBLICAR PRONÓSTICO -->
+    <!-- 1. PUBLICAR PRONÓSTICO -->
     <div class="card">
-        <h3>📝 Publicar Pronóstico</h3>
-        <select id="catInput">
-            <option value="HIPISMO">🐎 HIPISMO</option>
+        <h3>🚀 Publicar Nuevo Pronóstico</h3>
+        
+        <label>Deporte / Categoría:</label>
+        <select id="postCat">
+            <option value="CARRERAS DE CABALLOS">🐎 CARRERAS DE CABALLOS</option>
             <option value="MLB">⚾ MLB</option>
             <option value="NBA">🏀 NBA</option>
             <option value="NFL">🏈 NFL</option>
             <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
-        <input type="text" id="tipoInput" placeholder="Tipo (ej: DIRECTA, PARLAY, ALTA/BAJA)">
-        <input type="text" id="cuotaInput" placeholder="Cuota / Linea / Momio (ej: -120, +110, Altas 8.5)">
-        <input type="text" id="tituloInput" placeholder="Título del juego / carrera">
-        <textarea id="detallesInput" placeholder="Detalles de la jugada / picks..."></textarea>
         
-        <label class="checkbox-label">
-            <input type="checkbox" id="chkNotif" checked>
-            🔔 Crear aviso/notificación al publicar
-        </label>
+        <label>Tipo de Jugada:</label>
+        <select id="postType">
+            <option value="DIRECTA">DIRECTA</option>
+            <option value="COMBINADA">COMBINADA (PARLAY)</option>
+        </select>
 
-        <button onclick="publicarPronostico()">Publicar Jugada</button>
+        <label>Cuota / Momio / Línea:</label>
+        <input type="text" id="postOdds" placeholder="Ej: -120, +110, Altas 8.5">
+
+        <label>Título / Partido:</label>
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
+        
+        <label>Detalles del Pronóstico:</label>
+        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
+        
+        <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- ENVIAR AVISO INDEPENDIENTE -->
+    <!-- NUEVO: ESTADÍSTICA DE EFECTIVIDAD POR CUOTAS -->
     <div class="card">
-        <h3>📢 Enviar Aviso Solo</h3>
-        <input type="text" id="avisoTitulo" placeholder="Título del aviso">
-        <textarea id="avisoMensaje" placeholder="Mensaje para los usuarios..."></textarea>
-        <button class="btn-gold" onclick="publicarAvisoDirecto()">Publicar Aviso Solo</button>
-    </div>
-
-    <!-- ESTADÍSTICAS POR CUOTAS / MOMIOS -->
-    <div class="card">
-        <h3>📊 Efectividad por Cuota / Línea</h3>
-        <div id="oddsStatsArea">
-            <p style="font-size:10px; color:#777; text-align:center;">Calculando cuotas...</p>
+        <h3>📊 Efectividad por Cuota / Momio</h3>
+        <div id="adminOddsStats">
+            <p style="font-size:11px; color:#777;">Calculando efectividad de cuotas...</p>
         </div>
     </div>
 
-    <!-- HISTORIAL OCULTO POR DEPORTE (ACORDEÓN) -->
+    <!-- 2. GESTIONAR PRONÓSTICOS OCULTOS POR DEPORTE -->
     <div class="card">
-        <h3>📋 Pronósticos Publicados (Por Deporte)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en un deporte para desplegar sus jugadas.</p>
-        <div id="accordionContainer">
-            <p style="font-size:11px; color:#777; text-align:center;">Cargando categorías...</p>
+        <h3>📊 Gestionar Pronósticos Publicados</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en el deporte para desplegar sus jugadas.</p>
+        <div id="adminPostsAccordion">
+            <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
+    </div>
+
+    <!-- 3. ACTIVAR Y CONTROLAR USUARIOS VIP -->
+    <div class="card">
+        <h3>🔑 Gestión de Claves y Acceso VIP</h3>
+        <input type="text" id="clientName" placeholder="Nombre del Cliente">
+        <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
+        <button class="btn-green" onclick="guardarClave()">Activar Nueva Clave VIP</button>
+
+        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Lista de Claves Activas / Inactivas:</h4>
+        <div id="adminUsersList">
+            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
+        </div>
+    </div>
+
+    <!-- 4. CONFIGURACIONES GENERALES -->
+    <div class="card">
+        <h3>🖼️ Configurar Logo y WhatsApp</h3>
+        <label>URL del Logo:</label>
+        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
+        <label>Número de WhatsApp:</label>
+        <input type="text" id="wsNum" placeholder="+584121234567">
+        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
+    </div>
+
+    <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
+    <div class="card">
+        <h3>💳 Configurar Métodos de Pago</h3>
+        <label>Pago Móvil:</label>
+        <textarea id="pmData" rows="2" placeholder="Banco, Cédula, Teléfono..."></textarea>
+        <label>Binance Pay:</label>
+        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
+        <label>Otros Métodos:</label>
+        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
+        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
-    let pronosticosData = [];
+    let todosLosPronosticos = [];
 
-    // Cargar y Renderizar Pronósticos + Estadísticas
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        pronosticosData = [];
-        snapshot.forEach(doc => {
-            pronosticosData.push({ id: doc.id, ...doc.data() });
-        });
-        
-        renderizarAcordeonDeportes();
-        calcularEstadisticasCuotas();
+    db.collection("configuracion").doc("general").get().then((doc) => {
+        if(doc.exists) {
+            document.getElementById('logoUrl').value = doc.data().logoUrl || '';
+            document.getElementById('wsNum').value = doc.data().whatsapp || '';
+        }
     });
 
-    // 1. PUBLICAR PRONÓSTICO
-    function publicarPronostico() {
-        const cat = document.getElementById('catInput').value;
-        const tipo = document.getElementById('tipoInput').value.trim() || 'DIRECTA';
-        const cuota = document.getElementById('cuotaInput').value.trim() || 'N/A';
-        const titulo = document.getElementById('tituloInput').value.trim();
-        const detalles = document.getElementById('detallesInput').value.trim();
-        const enviarAviso = document.getElementById('chkNotif').checked;
+    db.collection("configuracion").doc("pagos").get().then((doc) => {
+        if(doc.exists) {
+            document.getElementById('pmData').value = doc.data().pagoMovil || '';
+            document.getElementById('binanceData').value = doc.data().binance || '';
+            document.getElementById('otrosData').value = doc.data().otros || '';
+        }
+    });
 
+    function guardarConfigGeneral() {
+        const logo = document.getElementById('logoUrl').value.trim();
+        const ws = document.getElementById('wsNum').value.trim();
+        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
+        .then(() => alert("✔ Logo y WhatsApp guardados."));
+    }
+
+    function guardarConfigPagos() {
+        const pm = document.getElementById('pmData').value.trim();
+        const binance = document.getElementById('binanceData').value.trim();
+        const otros = document.getElementById('otrosData').value.trim();
+        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
+        .then(() => alert("✔ Métodos de pago guardados."));
+    }
+
+    function publicarPronostico() {
+        const cat = document.getElementById('postCat').value;
+        const tipo = document.getElementById('postType').value;
+        const cuota = document.getElementById('postOdds').value.trim() || 'N/A';
+        const titulo = document.getElementById('postTitle').value.trim();
+        const detalles = document.getElementById('postDetails').value.trim();
         if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
         db.collection("pronosticos").add({
@@ -130,89 +176,63 @@
             cuota: cuota,
             titulo: titulo,
             detalles: detalles,
-            estatus: 'pendiente',
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
+            estatus: "pendiente",
+            fecha: new Date()
         }).then(() => {
-            if(enviarAviso) {
-                db.collection("notificaciones").add({
-                    titulo: `⚡ NUEVA JUGADA: ${cat}`,
-                    mensaje: `${titulo} (${tipo}) - Revisa el panel VIP.`,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            alert("✔ Jugada publicada con éxito");
-            document.getElementById('tituloInput').value = '';
-            document.getElementById('detallesInput').value = '';
-            document.getElementById('tipoInput').value = '';
-            document.getElementById('cuotaInput').value = '';
+            alert("🚀 Pronóstico publicado con éxito.");
+            document.getElementById('postOdds').value = '';
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postDetails').value = '';
         });
     }
 
-    // 2. PUBLICAR AVISO DIRECTO
-    function publicarAvisoDirecto() {
-        const titulo = document.getElementById('avisoTitulo').value.trim();
-        const mensaje = document.getElementById('avisoMensaje').value.trim();
-
-        if(!titulo || !mensaje) return alert("Ingresa título y mensaje para el aviso.");
-
-        db.collection("notificaciones").add({
-            titulo: titulo,
-            mensaje: mensaje,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            alert("📢 Aviso publicado correctamente");
-            document.getElementById('avisoTitulo').value = '';
-            document.getElementById('avisoMensaje').value = '';
+    // LECTURA DE PRONÓSTICOS Y GENERACIÓN DE ACORDEÓN + ESTADÍSTICAS
+    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+        todosLosPronosticos = [];
+        snapshot.forEach((doc) => {
+            todosLosPronosticos.push({ id: doc.id, ...doc.data() });
         });
-    }
 
-    // 3. RENDERIZAR ACORDEÓN POR DEPORTES (HISTORIAL LIMPIO)
-    function renderizarAcordeonDeportes() {
-        const container = document.getElementById('accordionContainer');
+        renderizarPronosticosAcordeon();
+        calcularEfectividadCuotas();
+    });
+
+    function renderizarPronosticosAcordeon() {
+        const container = document.getElementById('adminPostsAccordion');
         container.innerHTML = '';
 
-        const grupos = {};
-
-        // Agrupar por Deporte
-        pronosticosData.forEach(item => {
-            const cat = item.categoria || 'OTROS';
-            if(!grupos[cat]) grupos[cat] = [];
-            grupos[cat].push(item);
-        });
-
-        const categoriasKeys = Object.keys(grupos);
-
-        if(categoriasKeys.length === 0) {
-            container.innerHTML = '<p style="font-size:11px; color:#777; text-align:center;">No hay pronósticos registrados.</p>';
+        if(todosLosPronosticos.length === 0) {
+            container.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
             return;
         }
 
-        categoriasKeys.forEach((cat, index) => {
-            const items = grupos[cat];
-            
+        const agrupados = {};
+        todosLosPronosticos.forEach((p) => {
+            const cat = p.categoria || 'VARIOS';
+            if(!agrupados[cat]) agrupados[cat] = [];
+            agrupados[cat].push(p);
+        });
+
+        Object.keys(agrupados).forEach((cat, index) => {
+            const items = agrupados[cat];
             let htmlItems = '';
-            items.forEach(p => {
-                let badgeColor = '#ff9800';
-                if(p.estatus === 'win') badgeColor = '#4caf50';
-                if(p.estatus === 'lose') badgeColor = '#f44336';
+
+            items.forEach((p) => {
+                let badgeClass = 'status-pending';
+                if(p.estatus === 'win') badgeClass = 'status-win';
+                if(p.estatus === 'lose') badgeClass = 'status-lose';
 
                 htmlItems += `
-                    <div class="post-item">
-                        <div class="post-header">
-                            <div>
-                                <span class="tag">${p.tipo || 'DIRECTA'}</span>
-                                ${p.cuota ? `<span style="color:var(--gold); font-weight:bold; font-size:10px; margin-left:4px;">[${p.cuota}]</span>` : ''}
-                            </div>
-                            <span style="color:${badgeColor}; font-weight:bold; font-size:10px; text-transform:uppercase;">${p.estatus}</span>
-                        </div>
-                        <strong style="font-size:12px; display:block; margin-bottom:4px; color:#fff;">${p.titulo}</strong>
-                        <p style="font-size:11px; color:#ccc; white-space:pre-line; margin-bottom:8px;">${p.detalles}</p>
-                        
-                        <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
-                            <button class="btn-status btn-green" onclick="cambiarEstatus('${p.id}', 'win')">WIN 🟢</button>
-                            <button class="btn-status" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">LOSE 🔴</button>
-                            <button class="btn-status" style="background:#ff9800; color:#000;" onclick="cambiarEstatus('${p.id}', 'pendiente')">PENDIENTE 🟠</button>
-                            <button class="btn-delete" onclick="eliminarPronostico('${p.id}')">🗑️ Eliminar</button>
+                    <div class="item-list">
+                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
+                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
+                        ${p.cuota ? `<span style="color:var(--gold); font-size:10px; font-weight:bold; margin-left:5px;">[${p.cuota}]</span>` : ''}<br>
+                        <b>[${p.categoria}]</b> ${p.titulo}
+                        <div class="btn-group">
+                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">🟢 WIN</button>
+                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">🔴 LOSE</button>
+                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${p.id}', 'pendiente')">⏳ PENDIENTE</button>
+                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️ Borrar</button>
                         </div>
                     </div>
                 `;
@@ -220,7 +240,7 @@
 
             container.innerHTML += `
                 <div class="accordion-item">
-                    <div class="accordion-header" onclick="toggleAccordion('acc-${index}')">
+                    <div class="accordion-header" onclick="toggleAcc('acc-${index}')">
                         <span>${cat} (${items.length})</span>
                         <span>▼</span>
                     </div>
@@ -232,53 +252,40 @@
         });
     }
 
-    function toggleAccordion(id) {
-        const content = document.getElementById(id);
-        content.classList.toggle('open');
+    function toggleAcc(id) {
+        document.getElementById(id).classList.toggle('open');
     }
 
-    // 4. CAMBIAR ESTATUS Y ELIMINAR
-    function cambiarEstatus(id, nuevoEstatus) {
-        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
-    }
+    function calcularEfectividadCuotas() {
+        const oddsArea = document.getElementById('adminOddsStats');
+        oddsArea.innerHTML = '';
 
-    function eliminarPronostico(id) {
-        if(confirm("¿Seguro de que deseas eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete();
-        }
-    }
+        const stats = {};
 
-    // 5. ESTADÍSTICAS POR CUOTAS / MOMIOS (% DE ACIERTO)
-    function calcularEstadisticasCuotas() {
-        const area = document.getElementById('oddsStatsArea');
-        area.innerHTML = '';
-
-        const statsCuota = {};
-
-        pronosticosData.forEach(p => {
+        todosLosPronosticos.forEach(p => {
             if(!p.cuota || p.cuota === 'N/A') return;
             const c = p.cuota.toUpperCase().trim();
 
-            if(!statsCuota[c]) statsCuota[c] = { wins: 0, loses: 0 };
+            if(!stats[c]) stats[c] = { wins: 0, loses: 0 };
 
-            if(p.estatus === 'win') statsCuota[c].wins++;
-            if(p.estatus === 'lose') statsCuota[c].loses++;
+            if(p.estatus === 'win') stats[c].wins++;
+            if(p.estatus === 'lose') stats[c].loses++;
         });
 
-        const cuotasKeys = Object.keys(statsCuota);
+        const keys = Object.keys(stats);
 
-        if(cuotasKeys.length === 0) {
-            area.innerHTML = '<p style="font-size:10px; color:#777; text-align:center;">No hay cuotas registradas aún.</p>';
+        if(keys.length === 0) {
+            oddsArea.innerHTML = '<p style="font-size:11px; color:#777;">No hay cuotas registradas aún.</p>';
             return;
         }
 
-        cuotasKeys.forEach(cuota => {
-            const w = statsCuota[cuota].wins;
-            const l = statsCuota[cuota].loses;
+        keys.forEach(cuota => {
+            const w = stats[cuota].wins;
+            const l = stats[cuota].loses;
             const total = w + l;
             const efec = total > 0 ? ((w / total) * 100).toFixed(1) : 0;
 
-            area.innerHTML += `
+            oddsArea.innerHTML += `
                 <div class="stat-row">
                     <span style="color:var(--gold); font-weight:bold;">Cuota ${cuota}</span>
                     <span style="color:#aaa;">
@@ -289,7 +296,69 @@
             `;
         });
     }
+
+    function cambiarEstatus(id, nuevoEstatus) {
+        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
+    }
+
+    function eliminarPronostico(id) {
+        if(confirm("¿Seguro de eliminar este pronóstico?")) {
+            db.collection("pronosticos").doc(id).delete().then(() => {
+                alert("🗑️ Pronóstico eliminado con éxito.");
+            });
+        }
+    }
+
+    function guardarClave() {
+        const cliente = document.getElementById('clientName').value.trim();
+        const clave = document.getElementById('clientKey').value.trim().toUpperCase();
+        if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
+
+        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
+        .then(() => {
+            alert(`✔ Clave ${clave} creada y activada.`);
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientKey').value = '';
+        });
+    }
+
+    db.collection("claves").onSnapshot((snapshot) => {
+        const userList = document.getElementById('adminUsersList');
+        userList.innerHTML = '';
+
+        if(snapshot.empty) {
+            userList.innerHTML = '<p style="font-size:11px; color:#777;">No hay claves registradas.</p>';
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const keyId = doc.id;
+            const u = doc.data();
+
+            userList.innerHTML += `
+                <div class="item-list">
+                    <b>Cliente:</b> ${u.cliente} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
+                    <b>Estado:</b> <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'ACTIVO (VIP)' : 'INACTIVO'}</span>
+                    <div class="btn-group">
+                        <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${keyId}', ${!u.activa})">
+                            ${u.activa ? '🚫 Quitar Acceso' : '✔ Dar Acceso'}
+                        </button>
+                        <button class="btn-sm" style="background:#444;" onclick="eliminarClave('${keyId}')">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    function alternarAcceso(clave, nuevoEstado) {
+        db.collection("claves").doc(clave).update({ activa: nuevoEstado });
+    }
+
+    function eliminarClave(clave) {
+        if(confirm(`¿Seguro que deseas eliminar la clave ${clave}?`)) {
+            db.collection("claves").doc(clave).delete();
+        }
+    }
 </script>
 </body>
-    </html>
-    
+</html>
