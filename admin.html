@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
     <style>
         :root { --red: #d32f2f; --green: #2e7d32; --gold: #ffc107; --dark: #121212; --card: #1e1e1e; }
         body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
@@ -45,16 +44,16 @@
         <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
     </div>
 
-    <!-- MÓDULO DE NOTIFICACIONES PUSH Y SU BORRADO -->
+    <!-- MÓDULO DE NOTIFICACIONES -->
     <div class="card">
         <h3>🔔 Enviar y Borrar Notificaciones</h3>
         <label>Título de la Notificación:</label>
         <input type="text" id="notifTitle" placeholder="Ej: 🐎 ¡NUEVA JUGADA DIRECTA EN LA RINCONADA!">
         
         <label>Mensaje / Detalle:</label>
-        <textarea id="notifBody" rows="2" placeholder="Ej: Revisa la app para ver el pronóstico de la 5ta Válida."></textarea>
+        <textarea id="notifBody" rows="2" placeholder="Ej: Revisa la app para ver el pronóstico."></textarea>
         
-        <button class="btn-orange" onclick="enviarNotificacion()">Enviar Notificación a Usuarios</button>
+        <button class="btn-orange" type="button" onclick="enviarNotificacion()">Enviar Notificación a Usuarios</button>
 
         <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Historial de Notificaciones (Borrar):</h4>
         <div id="adminNotifsList">
@@ -90,7 +89,7 @@
         <label>Detalles del Pronóstico:</label>
         <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
         
-        <button onclick="publicarPronostico()">Publicar Pronóstico</button>
+        <button type="button" onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
     <!-- 2. GESTIONAR PRONÓSTICOS -->
@@ -107,7 +106,7 @@
         <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
         <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
-        <button class="btn-green" onclick="guardarClave()">Activar Nueva Clave VIP</button>
+        <button class="btn-green" type="button" onclick="guardarClave()">Activar Nueva Clave VIP</button>
 
         <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Lista de Claves Activas / Inactivas:</h4>
         <div id="adminUsersList">
@@ -122,7 +121,7 @@
         <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
         <label>Número de WhatsApp:</label>
         <input type="text" id="wsNum" placeholder="+584121234567">
-        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
+        <button type="button" onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
     </div>
 
     <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
@@ -134,52 +133,37 @@
         <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
         <label>Otros Métodos:</label>
         <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
-        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
+        <button type="button" onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
-    // BLINDAJE DE NOTIFICACIONES (EVITA BLOQUEOS SI FALLA PERMISO)
-    try {
-        const messaging = firebase.messaging();
-        messaging.requestPermission().then(() => {
-            return messaging.getToken();
-        }).then((token) => {
-            console.log("Token de Notificación Web listo:", token);
-        }).catch((err) => {
-            console.warn("Permiso de notificaciones denegado o no soportado en este dispositivo:", err);
-        });
-    } catch(e) {
-        console.warn("Firebase Messaging no iniciado:", e);
-    }
-
-    // FUNCIONALIDAD DE NOTIFICACIONES
+    // 1. NOTIFICACIONES
     function enviarNotificacion() {
         const titulo = document.getElementById('notifTitle').value.trim();
         const texto = document.getElementById('notifBody').value.trim();
 
-        if(!titulo || !texto) return alert("Completa el título y el mensaje de la notificación.");
+        if(!titulo || !texto) return alert("Completa el título y el mensaje.");
 
         db.collection("notificaciones").add({
             titulo: titulo,
             mensaje: texto,
             fecha: new Date()
         }).then(() => {
-            alert("🔔 Notificación publicada en la App.");
+            alert("🔔 Notificación enviada con éxito.");
             document.getElementById('notifTitle').value = '';
             document.getElementById('notifBody').value = '';
         }).catch(err => alert("Error: " + err.message));
     }
 
-    // LISTAR Y BORRAR NOTIFICACIONES
-    db.collection("notificaciones").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+    db.collection("notificaciones").onSnapshot((snapshot) => {
         const list = document.getElementById('adminNotifsList');
         if(!list) return;
         list.innerHTML = '';
 
         if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones enviadas.</p>';
+            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones registradas.</p>';
             return;
         }
 
@@ -189,25 +173,27 @@
 
             list.innerHTML += `
                 <div class="item-list" style="border-left-color: var(--green);">
-                    <b>${n.titulo}</b><br>
-                    <span style="color:#ccc;">${n.mensaje}</span>
+                    <b>${n.titulo || 'Sin título'}</b><br>
+                    <span style="color:#ccc;">${n.mensaje || n.detalles || 'Sin mensaje'}</span>
                     <div class="btn-group">
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="eliminarNotificacion('${id}')">🗑️ Borrar Notificación</button>
+                        <button class="btn-sm" style="background:#b71c1c;" onclick="eliminarNotificacion('${id}')">🗑️ Borrar</button>
                     </div>
                 </div>
             `;
         });
+    }, (error) => {
+        document.getElementById('adminNotifsList').innerHTML = `<p style="font-size:11px; color:red;">Error: ${error.message}</p>`;
     });
 
     function eliminarNotificacion(id) {
-        if(confirm("¿Seguro que deseas borrar esta notificación? Se quitará de la App de los usuarios.")) {
+        if(confirm("¿Seguro que deseas borrar esta notificación?")) {
             db.collection("notificaciones").doc(id).delete()
             .then(() => alert("🗑️ Notificación borrada."))
-            .catch(err => alert("Error al borrar: " + err.message));
+            .catch(err => alert("Error: " + err.message));
         }
     }
 
-    // DEMÁS FUNCIONES DEL PANEL
+    // 2. CONFIGURACIÓN GENERAL Y PAGOS
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
@@ -227,7 +213,7 @@
         const logo = document.getElementById('logoUrl').value.trim();
         const ws = document.getElementById('wsNum').value.trim();
         db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
-        .then(() => alert("✔ Logo y WhatsApp guardados."));
+        .then(() => alert("✔ Configuración guardada."));
     }
 
     function guardarConfigPagos() {
@@ -238,6 +224,7 @@
         .then(() => alert("✔ Métodos de pago guardados."));
     }
 
+    // 3. PRONÓSTICOS
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
@@ -262,7 +249,7 @@
         });
     }
 
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+    db.collection("pronosticos").onSnapshot((snapshot) => {
         const list = document.getElementById('adminPostsList');
         if(!list) return;
         list.innerHTML = '';
@@ -344,12 +331,11 @@
 
     function eliminarPronostico(id) {
         if(confirm("¿Seguro de eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete().then(() => {
-                alert("🗑️ Pronóstico eliminado con éxito.");
-            });
+            db.collection("pronosticos").doc(id).delete();
         }
     }
 
+    // 4. CLAVES Y USUARIOS VIP
     function guardarClave() {
         const cliente = document.getElementById('clientName').value.trim();
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
