@@ -2,38 +2,38 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PulsoFort99 - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         :root { --red: #d32f2f; --green: #2e7d32; --gold: #ffc107; --dark: #121212; --card: #1e1e1e; }
-        body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
+        body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 12px; margin: 0; padding-bottom: 50px; }
         .container { max-width: 480px; margin: 0 auto; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
-        h3 { font-size: 14px; color: var(--gold); margin-bottom: 10px; }
-        label { font-size: 11px; color: #ccc; }
-        input, textarea, select, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
-        button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
+        h3 { font-size: 14px; color: var(--gold); margin-bottom: 10px; margin-top:0; }
+        label { font-size: 11px; color: #ccc; display: block; margin-top: 6px; }
+        input, textarea, select, button { width: 100%; padding: 12px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 13px; box-sizing: border-box; }
+        button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; border-radius: 6px; }
         .btn-green { background: var(--green); }
         .btn-orange { background: #e65100; }
         .btn-blue { background: #1976d2; }
         
         .sport-accordion { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
         .sport-header-btn { width: 100%; background: #222; color: var(--gold); padding: 12px; font-weight: 800; font-size: 12px; text-align: left; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 0; margin: 0; }
-        .sport-header-btn:hover { background: #2d2d2d; }
         .sport-content { display: none; padding: 10px; background: #181818; }
         .sport-content.open { display: block; }
 
-        .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: thin; }
+        .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; }
         .logro-chip { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 6px 10px; white-space: nowrap; font-size: 10px; flex-shrink: 0; }
         .logro-name { font-weight: bold; color: #fff; }
         .logro-pct { font-weight: 800; color: var(--gold); margin-left: 4px; }
 
         .item-list { background: #262626; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--gold); font-size: 12px; }
         .btn-group { display: flex; gap: 5px; margin-top: 8px; }
-        .btn-sm { padding: 6px 10px; font-size: 10px; width: auto; flex: 1; margin: 0; }
+        .btn-sm { padding: 8px; font-size: 11px; width: auto; flex: 1; margin: 0; }
         .tag-status { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
         .status-win { background: var(--green); color: #fff; }
         .status-lose { background: #b71c1c; color: #fff; }
@@ -73,46 +73,45 @@
         <label>Logro / Cuota / Momio (Ej: -140, -149, Runline):</label>
         <input type="text" id="postLogro" placeholder="Ej: -149">
         
-        <label>Detalles Completos del Pronóstico:</label>
+        <label>Detalles Completos:</label>
         <textarea id="postDetails" rows="2" placeholder="Ej: Real Madrid a ganar cuota -149"></textarea>
         
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. NOTIFICACIONES Y COMUNICADOS A USUARIOS -->
+    <!-- 2. NOTIFICACIONES -->
     <div class="card">
-        <h3>🔔 Enviar Notificación / Mensaje General</h3>
-        <label>Título de la Notificación:</label>
+        <h3>🔔 Enviar Notificación / Mensaje</h3>
+        <label>Título:</label>
         <input type="text" id="notifTitle" placeholder="Ej: ¡Nuevos pronósticos disponibles!">
         <label>Mensaje:</label>
-        <textarea id="notifBody" rows="2" placeholder="Escribe el aviso para todos los usuarios..."></textarea>
+        <textarea id="notifBody" rows="2" placeholder="Escribe el aviso..."></textarea>
         <button class="btn-blue" onclick="enviarNotificacion()">Enviar Notificación</button>
         
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Últimas Notificaciones Enviadas:</h4>
+        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Últimas Notificaciones:</h4>
         <div id="notifHistoryList">
-            <p style="font-size:11px; color:#777;">Cargando historial de notificaciones...</p>
+            <p style="font-size:11px; color:#777;">Cargando notificaciones...</p>
         </div>
     </div>
 
-    <!-- 3. PANTALLA PRINCIPAL: PRONÓSTICOS ÚLTIMAS 24 HORAS -->
+    <!-- 3. PRONÓSTICOS ÚLTIMAS 24 HORAS -->
     <div class="card">
         <h3>🔥 Inicio: Pronósticos Recientes (24h)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Al pasar las 24h se archivan automáticamente en el histórico.</p>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Al pasar 24h se archivan al histórico.</p>
         <div id="active24hList">
             <p style="font-size:11px; color:#777;">Cargando pronósticos activos...</p>
         </div>
     </div>
 
-    <!-- 4. ARCHIVO HISTÓRICO POR DEPORTE -->
+    <!-- 4. ARCHIVO HISTÓRICO -->
     <div class="card">
         <h3>📂 Archivo Histórico por Deporte</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en un deporte para desplegar las cuotas/momios y sus juegos.</p>
         <div id="sportsAccordionContainer">
             <p style="font-size:11px; color:#777;">Cargando deportes...</p>
         </div>
     </div>
 
-    <!-- 5. GESTIÓN DE CLAVES Y ACCESO VIP -->
+    <!-- 5. CLAVES VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
@@ -123,7 +122,7 @@
         <div id="adminUsersList"></div>
     </div>
 
-    <!-- 6. CONFIGURACIONES GENERALES -->
+    <!-- 6. CONFIGURACIÓN -->
     <div class="card">
         <h3>🖼️ Logo y WhatsApp</h3>
         <input type="text" id="logoUrl" placeholder="URL del Logo">
@@ -141,267 +140,165 @@
     </div>
 </div>
 
-<script src="firebase-config.js"></script>
 <script>
-    // HELPER SEGURO PARA EXTRAER FECHA
     function obtenerTiempoMillis(fechaCampo) {
         if (!fechaCampo) return new Date().getTime();
         try {
-            if (typeof fechaCampo.toDate === 'function') {
-                return fechaCampo.toDate().getTime();
-            }
-            if (fechaCampo.seconds) {
-                return fechaCampo.seconds * 1000;
-            }
-            if (typeof fechaCampo === 'string' || typeof fechaCampo === 'number') {
-                return new Date(fechaCampo).getTime();
-            }
-        } catch (e) {
-            console.warn("Error procesando fecha:", e);
-        }
+            if (typeof fechaCampo.toDate === 'function') return fechaCampo.toDate().getTime();
+            if (fechaCampo.seconds) return fechaCampo.seconds * 1000;
+            if (typeof fechaCampo === 'string' || typeof fechaCampo === 'number') return new Date(fechaCampo).getTime();
+        } catch (e) {}
         return new Date().getTime();
     }
 
-    // CARGAR CONFIGURACIONES
-    db.collection("configuracion").doc("general").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('logoUrl').value = doc.data().logoUrl || '';
-            document.getElementById('wsNum').value = doc.data().whatsapp || '';
-        }
-    }).catch(err => console.log("Config general error:", err));
-
-    db.collection("configuracion").doc("pagos").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('pmData').value = doc.data().pagoMovil || '';
-            document.getElementById('binanceData').value = doc.data().binance || '';
-            document.getElementById('otrosData').value = doc.data().otros || '';
-        }
-    }).catch(err => console.log("Config pagos error:", err));
-
-    function guardarConfigGeneral() {
-        db.collection("configuracion").doc("general").set({
-            logoUrl: document.getElementById('logoUrl').value.trim(),
-            whatsapp: document.getElementById('wsNum').value.trim()
-        }, { merge: true }).then(() => alert("✔ Guardado con éxito."));
-    }
-
-    function guardarConfigPagos() {
-        db.collection("configuracion").doc("pagos").set({
-            pagoMovil: document.getElementById('pmData').value.trim(),
-            binance: document.getElementById('binanceData').value.trim(),
-            otros: document.getElementById('otrosData').value.trim()
-        }, { merge: true }).then(() => alert("✔ Métodos guardados con éxito."));
-    }
-
-    function enviarNotificacion() {
-        const titulo = document.getElementById('notifTitle').value.trim();
-        const mensaje = document.getElementById('notifBody').value.trim();
-
-        if(!titulo || !mensaje) return alert("Por favor escribe el título y mensaje.");
-
-        db.collection("notificaciones").add({
-            titulo: titulo,
-            mensaje: mensaje,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            alert("🔔 Notificación enviada.");
-            document.getElementById('notifTitle').value = '';
-            document.getElementById('notifBody').value = '';
-        });
-    }
-
-    db.collection("notificaciones").onSnapshot((snapshot) => {
-        const list = document.getElementById('notifHistoryList');
-        list.innerHTML = '';
-        if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones recientes.</p>';
-            return;
-        }
-        snapshot.forEach((doc) => {
-            const n = doc.data();
-            list.innerHTML += `
-                <div class="item-list" style="border-left-color: #1976d2;">
-                    <b>${n.titulo || 'Aviso'}</b><br>
-                    <span style="color:#ccc; font-size:11px;">${n.mensaje || ''}</span>
-                    <button class="btn-sm" style="background:#444; margin-top:5px;" onclick="eliminarNotificacion('${doc.id}')">🗑️ Eliminar</button>
-                </div>
-            `;
-        });
-    }, (error) => console.log("Notificaciones Listener Error:", error));
-
-    function eliminarNotificacion(id) {
-        if(confirm("¿Eliminar esta notificación?")) {
-            db.collection("notificaciones").doc(id).delete();
-        }
-    }
-
-    function publicarPronostico() {
-        const cat = document.getElementById('postCat').value;
-        const tipo = document.getElementById('postType').value;
-        const titulo = document.getElementById('postTitle').value.trim();
-        let logro = document.getElementById('postLogro').value.trim().toUpperCase();
-        const detalles = document.getElementById('postDetails').value.trim();
-        
-        if(!titulo) return alert("Ingresa un título para el partido.");
-
-        if(!logro && detalles) {
-            const match = detalles.match(/(-|\+)?\d{3,4}/);
-            if(match) logro = match[0];
-        }
-        if(!logro) logro = 'GENERAL';
-
-        db.collection("pronosticos").add({
-            categoria: cat,
-            tipo: tipo,
-            titulo: titulo,
-            logro: logro,
-            detalles: detalles,
-            estatus: "pendiente",
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            alert("🚀 Pronóstico publicado.");
-            document.getElementById('postTitle').value = '';
-            document.getElementById('postLogro').value = '';
-            document.getElementById('postDetails').value = '';
-        }).catch(e => alert("Error al publicar: " + e.message));
-    }
-
-    // LISTENER BLINDADO SIN BLOQUEO DE ERRORES
-    db.collection("pronosticos").onSnapshot((snapshot) => {
-        const active24hList = document.getElementById('active24hList');
-        const accordionContainer = document.getElementById('sportsAccordionContainer');
-
-        active24hList.innerHTML = '';
-        accordionContainer.innerHTML = '';
-
-        if(snapshot.empty) {
-            active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos registrados.</p>';
-            accordionContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay histórico.</p>';
-            return;
-        }
-
-        const ahora = new Date().getTime();
-        const limite24h = 24 * 60 * 60 * 1000;
-
-        let itemsArray = [];
-        snapshot.forEach((doc) => {
-            itemsArray.push({ id: doc.id, ...doc.data() });
-        });
-
-        // Ordenamiento seguro en memoria local
-        itemsArray.sort((a, b) => {
-            return obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha);
-        });
-
-        let totalActivos = 0;
-        let deportesMap = {};
-
-        itemsArray.forEach((p) => {
-            const id = p.id;
-            const fechaPost = obtenerTiempoMillis(p.fecha);
-            const esReciente = (ahora - fechaPost) <= limite24h;
-            const deporte = p.categoria || "VARIOS";
-
-            let logroTag = p.logro ? p.logro.toUpperCase() : 'GENERAL';
-            if((logroTag === 'GENERAL' || !logroTag) && p.detalles) {
-                const match = p.detalles.match(/(-|\+)?\d{3,4}/);
-                if(match) logroTag = match[0];
+    // LISTENER DE NOTIFICACIONES (SEPARADO Y PROTEGIDO)
+    if (typeof db !== 'undefined') {
+        db.collection("notificaciones").onSnapshot((snapshot) => {
+            const notifContainer = document.getElementById('notifHistoryList');
+            if (!notifContainer) return;
+            
+            notifContainer.innerHTML = '';
+            if (snapshot.empty) {
+                notifContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones enviadas.</p>';
+                return;
             }
 
-            let badgeClass = 'status-pending';
-            if(p.estatus === 'win') badgeClass = 'status-win';
-            if(p.estatus === 'lose') badgeClass = 'status-lose';
+            let notifs = [];
+            snapshot.forEach((doc) => {
+                notifs.push({ id: doc.id, ...doc.data() });
+            });
 
-            const itemHTML = `
-                <div class="item-list">
-                    <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
-                    <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Cuota/Momio: ${logroTag}</span><br>
-                    <b>[${p.categoria || 'VARIOS'}]</b> ${p.titulo || 'Sin Título'}<br>
-                    ${p.detalles ? `<span style="color:#aaa; font-size:11px;">${p.detalles}</span>` : ''}
-                    <div class="btn-group">
-                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
-                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️</button>
+            notifs.sort((a, b) => obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha));
+
+            notifs.forEach((n) => {
+                notifContainer.innerHTML += `
+                    <div style="background:#181818; padding:8px; border-radius:6px; margin-bottom:6px; border-left:2px solid #1976d2;">
+                        <b style="font-size:11px; color:#fff;">${n.titulo || 'Sin título'}</b>
+                        <p style="font-size:10px; color:#ccc; margin:2px 0 0 0;">${n.mensaje || ''}</p>
                     </div>
-                </div>
-            `;
+                `;
+            });
+        }, (err) => console.log("Error cargando notificaciones:", err));
 
-            if(esReciente) {
-                totalActivos++;
-                active24hList.innerHTML += itemHTML;
+        // LISTENER DE PRONÓSTICOS
+        db.collection("pronosticos").onSnapshot((snapshot) => {
+            const active24hList = document.getElementById('active24hList');
+            const accordionContainer = document.getElementById('sportsAccordionContainer');
+
+            if (!active24hList || !accordionContainer) return;
+
+            active24hList.innerHTML = '';
+            accordionContainer.innerHTML = '';
+
+            if (snapshot.empty) {
+                active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos registrados.</p>';
+                accordionContainer.innerHTML = '<p style="font-size:11px; color:#777;">No hay histórico.</p>';
+                return;
             }
 
-            if(!deportesMap[deporte]) {
-                deportesMap[deporte] = { logros: {}, items: [] };
-            }
+            const ahora = new Date().getTime();
+            const limite24h = 24 * 60 * 60 * 1000;
 
-            deportesMap[deporte].items.push(itemHTML);
+            let itemsArray = [];
+            snapshot.forEach((doc) => {
+                itemsArray.push({ id: doc.id, ...doc.data() });
+            });
 
-            if(!deportesMap[deporte].logros[logroTag]) {
-                deportesMap[deporte].logros[logroTag] = { win: 0, lose: 0, total: 0 };
-            }
+            itemsArray.sort((a, b) => obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha));
 
-            if(p.estatus === 'win') {
-                deportesMap[deporte].logros[logroTag].win++;
-                deportesMap[deporte].logros[logroTag].total++;
-            } else if(p.estatus === 'lose') {
-                deportesMap[deporte].logros[logroTag].lose++;
-                deportesMap[deporte].logros[logroTag].total++;
-            }
-        });
+            let totalActivos = 0;
+            let deportesMap = {};
 
-        if(totalActivos === 0) {
-            active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos enviados en las últimas 24 horas.</p>';
-        }
+            itemsArray.forEach((p) => {
+                const id = p.id;
+                const fechaPost = obtenerTiempoMillis(p.fecha);
+                const esReciente = (ahora - fechaPost) <= limite24h;
+                const deporte = p.categoria || "VARIOS";
 
-        for(const dep in deportesMap) {
-            const depData = deportesMap[dep];
-            let logrosHTML = '<div class="logros-row">';
-            let tieneMetricas = false;
+                let logroTag = p.logro ? p.logro.toUpperCase() : 'GENERAL';
 
-            for(const lg in depData.logros) {
-                const lStats = depData.logros[lg];
-                if(lStats.total > 0) {
-                    tieneMetricas = true;
-                    const pct = ((lStats.win / lStats.total) * 100).toFixed(0);
-                    logrosHTML += `
-                        <div class="logro-chip">
-                            <span class="logro-name">${lg}:</span>
-                            <span class="logro-pct">${pct}%</span>
-                            <span style="color:#888; font-size:9px;">(${lStats.win}W / ${lStats.lose}L)</span>
+                let badgeClass = 'status-pending';
+                if(p.estatus === 'win') badgeClass = 'status-win';
+                if(p.estatus === 'lose') badgeClass = 'status-lose';
+
+                const itemHTML = `
+                    <div class="item-list">
+                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
+                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
+                        <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Cuota: ${logroTag}</span><br>
+                        <b>[${deporte}]</b> ${p.titulo || 'Sin título'}<br>
+                        ${p.detalles ? `<span style="color:#aaa; font-size:11px;">${p.detalles}</span>` : ''}
+                        <div class="btn-group">
+                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
+                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
+                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PEND</button>
+                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️</button>
                         </div>
-                    `;
-                }
-            }
-
-            if(!tieneMetricas) {
-                logrosHTML += '<span style="font-size:10px; color:#666;">Sin resultados evaluados (WIN/LOSE).</span>';
-            }
-            logrosHTML += '</div>';
-
-            const sportSlug = dep.replace(/\s+/g, '_');
-
-            accordionContainer.innerHTML += `
-                <div class="sport-accordion">
-                    <button class="sport-header-btn" onclick="toggleDeporte('${sportSlug}')">
-                        <span>${dep} (${depData.items.length})</span>
-                        <span>▼</span>
-                    </button>
-                    <div id="content_${sportSlug}" class="sport-content">
-                        <div style="font-size:10px; color:var(--gold); font-weight:bold; margin-bottom:4px;">% Acierto por Cuota/Momio:</div>
-                        ${logrosHTML}
-                        <div style="font-size:10px; color:#aaa; margin-bottom:6px;">Juegos Registrados:</div>
-                        ${depData.items.join('')}
                     </div>
-                </div>
-            `;
-        }
-    }, (error) => {
-        console.error("Error Firestore:", error);
-        document.getElementById('active24hList').innerHTML = `<p style="color:#ff5252; font-size:11px;">Error de lectura: ${error.message}</p>`;
-    });
+                `;
+
+                if(esReciente) {
+                    totalActivos++;
+                    active24hList.innerHTML += itemHTML;
+                }
+
+                if(!deportesMap[deporte]) deportesMap[deporte] = { logros: {}, items: [] };
+                deportesMap[deporte].items.push(itemHTML);
+
+                if(!deportesMap[deporte].logros[logroTag]) deportesMap[deporte].logros[logroTag] = { win: 0, lose: 0, total: 0 };
+
+                if(p.estatus === 'win') {
+                    deportesMap[deporte].logros[logroTag].win++;
+                    deportesMap[deporte].logros[logroTag].total++;
+                } else if(p.estatus === 'lose') {
+                    deportesMap[deporte].logros[logroTag].lose++;
+                    deportesMap[deporte].logros[logroTag].total++;
+                }
+            });
+
+            if(totalActivos === 0) {
+                active24hList.innerHTML = '<p style="font-size:11px; color:#777;">Sin pronósticos en las últimas 24h.</p>';
+            }
+
+            for(const dep in deportesMap) {
+                const depData = deportesMap[dep];
+                let logrosHTML = '<div class="logros-row">';
+                let tieneMetricas = false;
+
+                for(const lg in depData.logros) {
+                    const lStats = depData.logros[lg];
+                    if(lStats.total > 0) {
+                        tieneMetricas = true;
+                        const pct = ((lStats.win / lStats.total) * 100).toFixed(0);
+                        logrosHTML += `
+                            <div class="logro-chip">
+                                <span class="logro-name">${lg}:</span>
+                                <span class="logro-pct">${pct}%</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                if(!tieneMetricas) logrosHTML += '<span style="font-size:10px; color:#666;">Sin métricas.</span>';
+                logrosHTML += '</div>';
+
+                const sportSlug = dep.replace(/\s+/g, '_');
+
+                accordionContainer.innerHTML += `
+                    <div class="sport-accordion">
+                        <button class="sport-header-btn" onclick="toggleDeporte('${sportSlug}')">
+                            <span>${dep} (${depData.items.length})</span>
+                            <span>▼</span>
+                        </button>
+                        <div id="content_${sportSlug}" class="sport-content">
+                            ${logrosHTML}
+                            ${depData.items.join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }, (err) => console.log("Error cargando pronósticos:", err));
+    }
 
     function toggleDeporte(slug) {
         const target = document.getElementById(`content_${slug}`);
@@ -413,9 +310,48 @@
     }
 
     function eliminarPronostico(id) {
-        if(confirm("¿Eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete();
-        }
+        if(confirm("¿Eliminar este pronóstico?")) db.collection("pronosticos").doc(id).delete();
+    }
+
+    function publicarPronostico() {
+        const cat = document.getElementById('postCat').value;
+        const tipo = document.getElementById('postType').value;
+        const titulo = document.getElementById('postTitle').value.trim();
+        let logro = document.getElementById('postLogro').value.trim().toUpperCase() || 'GENERAL';
+        const detalles = document.getElementById('postDetails').value.trim();
+        
+        if(!titulo) return alert("Ingresa un título.");
+
+        db.collection("pronosticos").add({
+            categoria: cat,
+            tipo: tipo,
+            titulo: titulo,
+            logro: logro,
+            detalles: detalles,
+            estatus: "pendiente",
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("🚀 Publicado.");
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postLogro').value = '';
+            document.getElementById('postDetails').value = '';
+        }).catch(e => alert("Error: " + e.message));
+    }
+
+    function enviarNotificacion() {
+        const titulo = document.getElementById('notifTitle').value.trim();
+        const mensaje = document.getElementById('notifBody').value.trim();
+        if(!titulo || !mensaje) return alert("Escribe título y mensaje.");
+
+        db.collection("notificaciones").add({
+            titulo: titulo,
+            mensaje: mensaje,
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("🔔 Notificación enviada.");
+            document.getElementById('notifTitle').value = '';
+            document.getElementById('notifBody').value = '';
+        }).catch(e => alert("Error al enviar notificación: " + e.message));
     }
 
     function guardarClave() {
@@ -423,4 +359,24 @@
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
         if(!cliente || !clave) return alert("Completa los datos.");
 
-        db.col
+        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
+        .then(() => alert(`✔ Clave ${clave} activada.`));
+    }
+
+    function guardarConfigGeneral() {
+        db.collection("configuracion").doc("general").set({
+            logoUrl: document.getElementById('logoUrl').value.trim(),
+            whatsapp: document.getElementById('wsNum').value.trim()
+        }, { merge: true }).then(() => alert("✔ Guardado."));
+    }
+
+    function guardarConfigPagos() {
+        db.collection("configuracion").doc("pagos").set({
+            pagoMovil: document.getElementById('pmData').value.trim(),
+            binance: document.getElementById('binanceData').value.trim(),
+            otros: document.getElementById('otrosData').value.trim()
+        }, { merge: true }).then(() => alert("✔ Guardado."));
+    }
+</script>
+</body>
+</html>
