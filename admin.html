@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
     <style>
         :root { --red: #d32f2f; --green: #2e7d32; --gold: #ffc107; --dark: #121212; --card: #1e1e1e; }
         body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
@@ -29,7 +30,6 @@
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .cuota-badge { background: #1a237e; color: #90caf9; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
 
-        /* Estilos del Acordeón */
         details { background: #181818; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
         summary { padding: 12px; font-size: 13px; font-weight: bold; color: var(--gold); cursor: pointer; background: #222; display: flex; justify-content: space-between; align-items: center; }
         summary::after { content: "►"; font-size: 10px; color: #aaa; }
@@ -43,6 +43,23 @@
 <div class="container">
     <div style="background:var(--red); color:white; text-align:center; padding:12px; border-radius:8px; margin-bottom:15px;">
         <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
+    </div>
+
+    <!-- MÓDULO DE NOTIFICACIONES PUSH Y SU BORRADO -->
+    <div class="card">
+        <h3>🔔 Enviar y Borrar Notificaciones</h3>
+        <label>Título de la Notificación:</label>
+        <input type="text" id="notifTitle" placeholder="Ej: 🐎 ¡NUEVA JUGADA DIRECTA EN LA RINCONADA!">
+        
+        <label>Mensaje / Detalle:</label>
+        <textarea id="notifBody" rows="2" placeholder="Ej: Revisa la app para ver el pronóstico de la 5ta Válida."></textarea>
+        
+        <button class="btn-orange" onclick="enviarNotificacion()">Enviar Notificación a Usuarios</button>
+
+        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Historial de Notificaciones (Borrar):</h4>
+        <div id="adminNotifsList">
+            <p style="font-size:11px; color:#777;">Cargando notificaciones...</p>
+        </div>
     </div>
 
     <!-- 1. PUBLICAR PRONÓSTICO -->
@@ -76,7 +93,7 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. GESTIONAR PRONÓSTICOS (ORGANIZADOS EN ACORDEÓN) -->
+    <!-- 2. GESTIONAR PRONÓSTICOS -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
         <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en cada deporte para desplegar las jugadas.</p>
@@ -123,6 +140,74 @@
 
 <script src="firebase-config.js"></script>
 <script>
+    // BLINDAJE DE NOTIFICACIONES (EVITA BLOQUEOS SI FALLA PERMISO)
+    try {
+        const messaging = firebase.messaging();
+        messaging.requestPermission().then(() => {
+            return messaging.getToken();
+        }).then((token) => {
+            console.log("Token de Notificación Web listo:", token);
+        }).catch((err) => {
+            console.warn("Permiso de notificaciones denegado o no soportado en este dispositivo:", err);
+        });
+    } catch(e) {
+        console.warn("Firebase Messaging no iniciado:", e);
+    }
+
+    // FUNCIONALIDAD DE NOTIFICACIONES
+    function enviarNotificacion() {
+        const titulo = document.getElementById('notifTitle').value.trim();
+        const texto = document.getElementById('notifBody').value.trim();
+
+        if(!titulo || !texto) return alert("Completa el título y el mensaje de la notificación.");
+
+        db.collection("notificaciones").add({
+            titulo: titulo,
+            mensaje: texto,
+            fecha: new Date()
+        }).then(() => {
+            alert("🔔 Notificación publicada en la App.");
+            document.getElementById('notifTitle').value = '';
+            document.getElementById('notifBody').value = '';
+        }).catch(err => alert("Error: " + err.message));
+    }
+
+    // LISTAR Y BORRAR NOTIFICACIONES
+    db.collection("notificaciones").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+        const list = document.getElementById('adminNotifsList');
+        if(!list) return;
+        list.innerHTML = '';
+
+        if(snapshot.empty) {
+            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones enviadas.</p>';
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const id = doc.id;
+            const n = doc.data();
+
+            list.innerHTML += `
+                <div class="item-list" style="border-left-color: var(--green);">
+                    <b>${n.titulo}</b><br>
+                    <span style="color:#ccc;">${n.mensaje}</span>
+                    <div class="btn-group">
+                        <button class="btn-sm" style="background:#b71c1c;" onclick="eliminarNotificacion('${id}')">🗑️ Borrar Notificación</button>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    function eliminarNotificacion(id) {
+        if(confirm("¿Seguro que deseas borrar esta notificación? Se quitará de la App de los usuarios.")) {
+            db.collection("notificaciones").doc(id).delete()
+            .then(() => alert("🗑️ Notificación borrada."))
+            .catch(err => alert("Error al borrar: " + err.message));
+        }
+    }
+
+    // DEMÁS FUNCIONES DEL PANEL
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
@@ -177,9 +262,9 @@
         });
     }
 
-    // CARGA CON ESTRUCTURA DE ACORDEÓN POR DEPORTE
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const list = document.getElementById('adminPostsList');
+        if(!list) return;
         list.innerHTML = '';
 
         if(snapshot.empty) {
@@ -198,7 +283,6 @@
 
             deportes[cat].items.push({ id: id, ...p });
 
-            // Estadísticas por Momio
             const momio = p.cuota || 'GENERAL';
             if(!deportes[cat].momios[momio]) deportes[cat].momios[momio] = { wins: 0, loses: 0 };
             if(p.estatus === 'win') deportes[cat].momios[momio].wins++;
@@ -281,6 +365,7 @@
 
     db.collection("claves").onSnapshot((snapshot) => {
         const userList = document.getElementById('adminUsersList');
+        if(!userList) return;
         userList.innerHTML = '';
 
         if(snapshot.empty) {
@@ -318,5 +403,4 @@
     }
 </script>
 </body>
-                                                                                    </html>
-    
+</html>
