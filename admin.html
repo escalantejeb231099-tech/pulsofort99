@@ -44,7 +44,6 @@
         <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
     </div>
 
-    <!-- MÓDULO DE NOTIFICACIONES -->
     <div class="card">
         <h3>🔔 Enviar y Borrar Notificaciones</h3>
         <label>Título de la Notificación:</label>
@@ -61,7 +60,6 @@
         </div>
     </div>
 
-    <!-- 1. PUBLICAR PRONÓSTICO -->
     <div class="card">
         <h3>🚀 Publicar Nuevo Pronóstico</h3>
         
@@ -92,7 +90,6 @@
         <button type="button" onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. GESTIONAR PRONÓSTICOS -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
         <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en cada deporte para desplegar las jugadas.</p>
@@ -101,7 +98,6 @@
         </div>
     </div>
 
-    <!-- 3. ACTIVAR Y CONTROLAR USUARIOS VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
@@ -114,7 +110,6 @@
         </div>
     </div>
 
-    <!-- 4. CONFIGURACIONES GENERALES -->
     <div class="card">
         <h3>🖼️ Configurar Logo y WhatsApp</h3>
         <label>URL del Logo:</label>
@@ -124,7 +119,6 @@
         <button type="button" onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
     </div>
 
-    <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
     <div class="card">
         <h3>💳 Configurar Métodos de Pago</h3>
         <label>Pago Móvil:</label>
@@ -139,7 +133,6 @@
 
 <script src="firebase-config.js"></script>
 <script>
-    // 1. NOTIFICACIONES
     function enviarNotificacion() {
         const titulo = document.getElementById('notifTitle').value.trim();
         const texto = document.getElementById('notifBody').value.trim();
@@ -149,7 +142,7 @@
         db.collection("notificaciones").add({
             titulo: titulo,
             mensaje: texto,
-            fecha: new Date()
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             alert("🔔 Notificación enviada con éxito.");
             document.getElementById('notifTitle').value = '';
@@ -193,7 +186,6 @@
         }
     }
 
-    // 2. CONFIGURACIÓN GENERAL Y PAGOS
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
@@ -224,7 +216,6 @@
         .then(() => alert("✔ Métodos de pago guardados."));
     }
 
-    // 3. PRONÓSTICOS
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
@@ -240,7 +231,7 @@
             titulo: titulo,
             detalles: detalles,
             estatus: "pendiente",
-            fecha: new Date()
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
@@ -335,13 +326,12 @@
         }
     }
 
-    // 4. CLAVES Y USUARIOS VIP
     function guardarClave() {
         const cliente = document.getElementById('clientName').value.trim();
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
         if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
 
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
+        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: firebase.firestore.FieldValue.serverTimestamp() })
         .then(() => {
             alert(`✔ Clave ${clave} creada y activada.`);
             document.getElementById('clientName').value = '';
@@ -389,4 +379,5 @@
     }
 </script>
 </body>
-</html>
+    </html>
+    
