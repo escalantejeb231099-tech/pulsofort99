@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
     <style>
         :root { --red: #d32f2f; --dark: #121212; --card: #1e1e1e; --gold: #ffc107; --green: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
@@ -26,6 +27,7 @@
         input { background: #2a2a2a; color: #fff; border: 1px solid #444; }
         button { background: var(--red); color: #fff; font-weight: bold; cursor: pointer; }
         .btn-ws { background: #25d366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 13px; margin-bottom: 15px; }
+        .btn-notif { background: #1976d2; color: #fff; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .blur { filter: blur(6px); opacity: 0.25; user-select: none; }
         .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
         .type-tag { background: #333; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; margin-left: 5px; }
@@ -59,7 +61,10 @@
         <p style="font-size:11px; color:#aaa;">Pronósticos Deportivos e Hipismo</p>
     </div>
 
-    <!-- ESTADÍSTICAS GENERALES INTACTAS -->
+    <!-- BOTÓN DE NOTIFICACIONES PUSH -->
+    <button id="btnNotif" class="btn-notif" onclick="solicitarPermisoNotificaciones()">🔔 Activar Alertas de Jugadas</button>
+
+    <!-- ESTADÍSTICAS GENERALES -->
     <div class="stats-box">
         <div class="stat-item">Efectividad General<span id="rateVal" class="stat-val" style="color:var(--gold);">0%</span></div>
         <div class="stat-item">Verdes (WIN)<span id="winVal" class="stat-val" style="color:#4caf50;">0</span></div>
@@ -122,6 +127,45 @@
     let todosLosPronosticos = [];
     let categoriaActual = 'RECIENTES';
 
+    const vapidKey = "BIBXzCqj3L2IKw6ePFWCAM3YRm_PM8jEnnSJnDq7PYkboyHNmDcFualzqNzpju5JP4XNddClIOXwUKkvmzBxqfw";
+    let messaging = null;
+
+    if (firebase.messaging.isSupported()) {
+        messaging = firebase.messaging();
+    }
+
+    function solicitarPermisoNotificaciones() {
+        if (!messaging) {
+            alert("Tu navegador no soporta notificaciones push.");
+            return;
+        }
+
+        Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+                messaging.getToken({ vapidKey: vapidKey }).then((tokenActual) => {
+                    if (tokenActual) {
+                        db.collection("tokens_notificaciones").doc(tokenActual).set({
+                            token: tokenActual,
+                            creado: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        alert("🔔 ¡Alertas activadas con éxito!");
+                        document.getElementById('btnNotif').style.display = 'none';
+                    }
+                }).catch((err) => {
+                    console.error("Error al obtener token:", err);
+                });
+            } else {
+                alert("Permiso de notificaciones denegado.");
+            }
+        });
+    }
+
+    if (messaging) {
+        messaging.onMessage((payload) => {
+            alert(`🔔 ALERTA: ${payload.notification.title}\n${payload.notification.body}`);
+        });
+    }
+
     db.collection("configuracion").doc("general").onSnapshot((doc) => {
         if(doc.exists) {
             const data = doc.data();
@@ -169,7 +213,6 @@
         });
     }
 
-    // Normaliza categorías y corrige errores ortográficos de entrada
     function normalizarCategoria(cat) {
         if (!cat) return 'HIPISMO';
         const c = cat.toUpperCase().trim();
@@ -210,7 +253,6 @@
                 }
             });
 
-            // % General intacto
             const totalResueltos = wins + loses;
             const efectividad = totalResueltos > 0 ? ((wins / totalResueltos) * 100).toFixed(1) : 0;
             
@@ -218,7 +260,6 @@
             document.getElementById('loseVal').innerText = loses;
             document.getElementById('rateVal').innerText = `${efectividad}%`;
 
-            // % Por Disciplina
             const catStatsArea = document.getElementById('catStatsList');
             catStatsArea.innerHTML = '';
             
@@ -265,16 +306,13 @@
         let filtrados = [];
 
         if (categoriaActual === 'RECIENTES') {
-            // Muestra solo lo publicado en las últimas 24 horas para mantener la interfaz limpia
             filtrados = todosLosPronosticos.filter(p => {
                 const tiempoPublicado = ahora - p.fechaObj.getTime();
                 return tiempoPublicado <= limite24Horas;
             });
         } else if (categoriaActual === 'TODOS') {
-            // Muestra absolutamente todo el historial publicado
             filtrados = todosLosPronosticos;
         } else {
-            // Muestra el historial filtrado por disciplina específica
             filtrados = todosLosPronosticos.filter(p => p.categoriaNormalizada === categoriaActual);
         }
 
