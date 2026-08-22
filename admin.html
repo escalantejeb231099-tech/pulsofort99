@@ -28,14 +28,18 @@
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         
-        /* Navegación por Pestañas */
+        /* Navegación por Pestañas Horizontales */
         .tab-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
         .tab-scroll::-webkit-scrollbar { display: none; }
         .tab-btn { background: #2a2a2a; color: #ccc; border: 1px solid #444; padding: 6px 12px; border-radius: 15px; font-size: 10px; white-space: nowrap; cursor: pointer; width: auto; margin: 0; }
         .tab-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: bold; }
 
-        .stat-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-bottom: 1px solid #333; }
-        .stat-row:last-child { border-bottom: none; }
+        /* Módulo Horizontal de Equipos / Logros */
+        .logros-horizontal { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 10px 0; scrollbar-width: none; }
+        .logros-horizontal::-webkit-scrollbar { display: none; }
+        .team-card { background: #282828; border: 1px solid #444; border-radius: 8px; padding: 10px; min-width: 140px; flex-shrink: 0; text-align: center; }
+        .team-title { font-size: 11px; font-weight: bold; color: var(--gold); display: block; margin-bottom: 4px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .team-stats { font-size: 10px; }
     </style>
 </head>
 <body>
@@ -68,11 +72,11 @@
             <option value="RUNLINE">⚾ RUNLINE / SPREAD</option>
         </select>
 
-        <label>Título / Partido / Equipo y Logro:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Dodgers -150 / Yankees RL-1.5 / 5ta Válida La Rinconada">
+        <label>Título / Partido:</label>
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
-        <label>Detalles del Pronóstico:</label>
-        <textarea id="postDetails" rows="3" placeholder="Ingresa los detalles, jugada y logros (-140, +120)..."></textarea>
+        <label>Detalles del Pronóstico (Equipos y Logros):</label>
+        <textarea id="postDetails" rows="3" placeholder="Ej: Dodgers -150 / Yankees RL-1.5..."></textarea>
 
         <label style="font-size: 11px; display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--gold);">
             <input type="checkbox" id="pushNotif" checked style="width: auto; margin: 0;"> 🔔 Enviar Notificación Push
@@ -81,11 +85,20 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. ESTADÍSTICAS Y RENDIMIENTO DE LOGROS Extraídos -->
+    <!-- 2. ANÁLISIS E HISTORIAL DE LOGROS POR EQUIPO (HORIZONTAL) -->
     <div class="card">
-        <h3>📈 Análisis e Historial de Logros por Equipo</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:8px;">Seguimiento automático de aciertos por línea/logro detectado:</p>
-        <div id="logrosStatsList">
+        <h3>📈 Análisis de Logros por Equipo</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:8px;">Filtra por deporte para ver el rendimiento de cada equipo/selección:</p>
+        
+        <div class="tab-scroll">
+            <button class="tab-btn active" onclick="filtrarStatsDeporte('MLB', this)">⚾ MLB</button>
+            <button class="tab-btn" onclick="filtrarStatsDeporte('HIPISMO', this)">🐎 HIPISMO</button>
+            <button class="tab-btn" onclick="filtrarStatsDeporte('NBA', this)">🏀 NBA</button>
+            <button class="tab-btn" onclick="filtrarStatsDeporte('NFL', this)">🏈 NFL</button>
+            <button class="tab-btn" onclick="filtrarStatsDeporte('FUTBOL', this)">⚽ FÚTBOL</button>
+        </div>
+
+        <div id="logrosStatsList" class="logros-horizontal">
             <p style="font-size:11px; color:#777;">Procesando historial...</p>
         </div>
     </div>
@@ -150,6 +163,8 @@
 <script>
     let todosLosPronosticosAdmin = [];
     let tabActual = '24H';
+    let deporteStatsActual = 'MLB';
+    let mapaEstadisticasEquipos = {};
 
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
@@ -211,16 +226,24 @@
         });
     }
 
-    function extraerLogroTexto(texto) {
-        // Busca patrones de logros numéricos como -150, +120, @1.85, RL-1.5, etc.
-        const patron = /([a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+)?([\+\-]\d{2,4}|RL[\+\-]?\d?\.?\d?|@\d\.?\d*)/gi;
-        const coincidencias = texto.match(patron);
-        return coincidencias ? coincidencias.map(c => c.trim()) : [];
+    function extraerEquiposYLogros(texto) {
+        // Extrae nombres/equipos acompañados de sus cuotas/líneas (-150, +120, RL-1.5, etc.)
+        const regex = /([a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+?)\s*([\+\-]\d{2,4}|RL[\+\-]?\d?\.?\d?|@\d\.?\d*)/gi;
+        let resultados = [];
+        let coincidencia;
+        while ((coincidencia = regex.exec(texto)) !== null) {
+            let nombre = coincidencia[1].replace(/vs|v\.s\.|/gi, '').trim();
+            let logro = coincidencia[2].trim();
+            if (nombre.length > 2) {
+                resultados.push({ equipo: nombre, logro: logro });
+            }
+        }
+        return resultados;
     }
 
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         todosLosPronosticosAdmin = [];
-        let conteoLogros = {};
+        mapaEstadisticasEquipos = {};
 
         snapshot.forEach((doc) => {
             const item = doc.data();
@@ -231,56 +254,75 @@
             
             todosLosPronosticosAdmin.push(item);
 
-            // Analizar texto para extracción de Logro / Línea / Equipo
-            const textoAnalizar = `${item.titulo} ${item.detalles}`;
-            const logrosHallados = extraerLogroTexto(textoAnalizar);
+            const dep = item.categoria ? item.categoria.toUpperCase() : 'VARIOS';
+            if (!mapaEstadisticasEquipos[dep]) mapaEstadisticasEquipos[dep] = {};
 
-            if (logrosHallados.length > 0) {
-                logrosHallados.forEach(logroStr => {
-                    const claveLogro = `[${item.categoria}] ${logroStr}`;
-                    if(!conteoLogros[claveLogro]) conteoLogros[claveLogro] = { win: 0, lose: 0 };
-                    if(item.estatus === 'win') conteoLogros[claveLogro].win++;
-                    if(item.estatus === 'lose') conteoLogros[claveLogro].lose++;
+            const textoAnalizar = `${item.titulo} \n ${item.detalles}`;
+            const extracciones = extraerEquiposYLogros(textoAnalizar);
+
+            if (extracciones.length > 0) {
+                extracciones.forEach(obj => {
+                    const clave = `${obj.equipo} (${obj.logro})`;
+                    if (!mapaEstadisticasEquipos[dep][clave]) {
+                        mapaEstadisticasEquipos[dep][clave] = { win: 0, lose: 0 };
+                    }
+                    if (item.estatus === 'win') mapaEstadisticasEquipos[dep][clave].win++;
+                    if (item.estatus === 'lose') mapaEstadisticasEquipos[dep][clave].lose++;
                 });
             } else {
-                const claveFallback = `[${item.categoria}] ${item.titulo.substring(0, 25)}`;
-                if(!conteoLogros[claveFallback]) conteoLogros[claveFallback] = { win: 0, lose: 0 };
-                if(item.estatus === 'win') conteoLogros[claveFallback].win++;
-                if(item.estatus === 'lose') conteoLogros[claveFallback].lose++;
+                const claveFallback = item.titulo.substring(0, 20);
+                if (!mapaEstadisticasEquipos[dep][claveFallback]) {
+                    mapaEstadisticasEquipos[dep][claveFallback] = { win: 0, lose: 0 };
+                }
+                if (item.estatus === 'win') mapaEstadisticasEquipos[dep][claveFallback].win++;
+                if (item.estatus === 'lose') mapaEstadisticasEquipos[dep][claveFallback].lose++;
             }
         });
 
-        // Renderizar Métricas de Logros
-        const statsList = document.getElementById('logrosStatsList');
-        statsList.innerHTML = '';
-        const llavesLogros = Object.keys(conteoLogros);
-
-        if (llavesLogros.length === 0) {
-            statsList.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos de logros detectados.</p>';
-        } else {
-            llavesLogros.slice(0, 8).forEach((key) => {
-                const data = conteoLogros[key];
-                const total = data.win + data.lose;
-                const efec = total > 0 ? ((data.win / total) * 100).toFixed(0) : 0;
-                
-                statsList.innerHTML += `
-                    <div class="stat-row">
-                        <span style="color:#ddd; font-weight:600;">${key}</span>
-                        <span>
-                            <b style="color:#4caf50;">${data.win}W</b> - <b style="color:#f44336;">${data.lose}L</b> 
-                            <b style="color:var(--gold); margin-left:5px;">(${efec}%)</b>
-                        </span>
-                    </div>
-                `;
-            });
-        }
-
+        renderizarStatsHorizontales();
         renderizarAdminPosts();
     });
 
+    function filtrarStatsDeporte(deporte, btn) {
+        deporteStatsActual = deporte;
+        btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderizarStatsHorizontales();
+    }
+
+    function renderizarStatsHorizontales() {
+        const container = document.getElementById('logrosStatsList');
+        container.innerHTML = '';
+
+        const equiposDeporte = mapaEstadisticasEquipos[deporteStatsActual] || {};
+        const llaves = Object.keys(equiposDeporte);
+
+        if (llaves.length === 0) {
+            container.innerHTML = '<p style="font-size:11px; color:#777; padding:5px;">Sin datos registrados para este deporte.</p>';
+            return;
+        }
+
+        llaves.forEach(equipoKey => {
+            const data = equiposDeporte[equipoKey];
+            const total = data.win + data.lose;
+            const efec = total > 0 ? ((data.win / total) * 100).toFixed(0) : 0;
+
+            container.innerHTML += `
+                <div class="team-card">
+                    <span class="team-title">${equipoKey}</span>
+                    <div class="team-stats">
+                        <span style="color:#4caf50; font-weight:bold;">${data.win}W</span> - 
+                        <span style="color:#f44336; font-weight:bold;">${data.lose}L</span>
+                        <div style="color:var(--gold); font-weight:bold; margin-top:2px;">Efectividad: ${efec}%</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
     function filtrarAdminTab(tab, btn) {
         tabActual = tab;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         renderizarAdminPosts();
     }
@@ -368,30 +410,4 @@
             const keyId = doc.id;
             const u = doc.data();
 
-            userList.innerHTML += `
-                <div class="item-list">
-                    <b>Cliente:</b> ${u.cliente} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
-                    <b>Estado:</b> <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'ACTIVO (VIP)' : 'INACTIVO'}</span>
-                    <div class="btn-group">
-                        <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${keyId}', ${!u.activa})">
-                            ${u.activa ? '🚫 Quitar Acceso' : '✔ Dar Acceso'}
-                        </button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarClave('${keyId}')">🗑️</button>
-                    </div>
-                </div>
-            `;
-        });
-    });
-
-    function alternarAcceso(clave, nuevoEstado) {
-        db.collection("claves").doc(clave).update({ activa: nuevoEstado });
-    }
-
-    function eliminarClave(clave) {
-        if(confirm(`¿Seguro que deseas eliminar la clave ${clave}?`)) {
-            db.collection("claves").doc(clave).delete();
-        }
-    }
-</script>
-</body>
-</html>
+            userList.innerHTML 
