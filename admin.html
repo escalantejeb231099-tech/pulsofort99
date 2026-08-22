@@ -29,10 +29,8 @@
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .cuota-badge { background: #1a237e; color: #90caf9; border: 1px solid #3949ab; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
 
-        /* ESTILOS PARA ACORDEONES */
         details { background: #181818; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
         summary { padding: 10px 12px; font-size: 12px; font-weight: bold; color: var(--gold); cursor: pointer; background: #222; list-style: none; display: flex; justify-content: space-between; align-items: center; }
-        summary::-webkit-details-marker { display: none; }
         summary::after { content: "►"; font-size: 10px; color: #aaa; }
         details[open] summary::after { content: "▼"; color: var(--gold); }
         .accordion-content { padding: 10px; }
@@ -45,11 +43,9 @@
         <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
     </div>
 
-    <!-- 1. PUBLICAR PRONÓSTICO -->
     <div class="card">
         <h3>🚀 Publicar Nuevo Pronóstico</h3>
-        
-        <label>Deporte / Categoría:</label>
+        <label>Deporte:</label>
         <select id="postCat">
             <option value="HIPISMO">🐎 HIPISMO</option>
             <option value="MLB">⚾ MLB</option>
@@ -57,368 +53,136 @@
             <option value="NFL">🏈 NFL</option>
             <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
-        
-        <label>Tipo de Jugada:</label>
+        <label>Tipo:</label>
         <select id="postType">
             <option value="DIRECTA">DIRECTA</option>
             <option value="COMBINADA">COMBINADA (PARLAY)</option>
         </select>
-
-        <label>Cuota / Logro (Ej: -120, Alta 8.5, Runline):</label>
-        <input type="text" id="postOdds" placeholder="Ej: -120, Alta 8.5, +150">
-
-        <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
-        
-        <label>Detalles del Pronóstico:</label>
-        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
-        
+        <label>Cuota / Logro:</label>
+        <input type="text" id="postOdds" placeholder="Ej: -120">
+        <label>Título:</label>
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees">
+        <label>Detalles:</label>
+        <textarea id="postDetails" rows="3"></textarea>
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. EMITIR Y GESTIONAR NOTIFICACIONES / AVISOS -->
     <div class="card">
-        <h3>📢 Notificaciones y Avisos en Vivo</h3>
-        <input type="text" id="notifTitle" placeholder="Título (Ej: 🔥 Alerta VIP)">
-        <textarea id="notifMessage" rows="2" placeholder="Mensaje para los usuarios..."></textarea>
+        <h3>📢 Notificaciones</h3>
+        <input type="text" id="notifTitle" placeholder="Título">
+        <textarea id="notifMessage" rows="2" placeholder="Mensaje"></textarea>
         <button class="btn-orange" onclick="enviarNotificacion()">Enviar Aviso</button>
-
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Avisos Publicados:</h4>
-        <div id="adminNotifList">
-            <p style="font-size:11px; color:#777;">Cargando avisos...</p>
-        </div>
+        <div id="adminNotifList"></div>
     </div>
 
-    <!-- 3. ESTADÍSTICAS POR DEPORTES Y CUOTAS (EN ACORDEÓN) -->
     <div class="card">
-        <h3>📈 Métricas y Efectividad (% WIN/LOSE)</h3>
-        <div id="accordionStats">
-            <p style="font-size:11px; color:#777;">Calculando estadísticas...</p>
-        </div>
+        <h3>📈 Métricas de Efectividad</h3>
+        <div id="accordionStats"></div>
     </div>
 
-    <!-- 4. GESTIONAR PRONÓSTICOS (EN ACORDEÓN POR DEPORTE) -->
     <div class="card">
-        <h3>📊 Gestionar Pronósticos (Por Deporte)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Abre cada deporte para cambiar estatus o eliminar jugadas.</p>
-        <div id="adminPostsList">
-            <p style="font-size:11px; color:#777;">Cargando lista...</p>
-        </div>
+        <h3>📊 Gestión de Pronósticos</h3>
+        <div id="adminPostsList"></div>
     </div>
 
-    <!-- 5. ACTIVAR Y CONTROLAR USUARIOS VIP -->
     <div class="card">
-        <h3>🔑 Gestión de Claves y Acceso VIP</h3>
-        <input type="text" id="clientName" placeholder="Nombre del Cliente">
-        <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
-        <button class="btn-green" onclick="guardarClave()">Activar Nueva Clave VIP</button>
-
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Lista de Claves Activas / Inactivas:</h4>
-        <div id="adminUsersList">
-            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
-        </div>
-    </div>
-
-    <!-- 6. CONFIGURACIONES GENERALES -->
-    <div class="card">
-        <h3>🖼️ Configurar Logo y WhatsApp</h3>
-        <label>URL del Logo:</label>
-        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
-        <label>Número de WhatsApp:</label>
-        <input type="text" id="wsNum" placeholder="+584121234567">
-        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
-    </div>
-
-    <!-- 7. CONFIGURAR MÉTODOS DE PAGO -->
-    <div class="card">
-        <h3>💳 Configurar Métodos de Pago</h3>
-        <label>Pago Móvil:</label>
-        <textarea id="pmData" rows="2" placeholder="Banco, Cédula, Teléfono..."></textarea>
-        <label>Binance Pay:</label>
-        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
-        <label>Otros Métodos:</label>
-        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
-        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
+        <h3>🔑 Claves VIP</h3>
+        <input type="text" id="clientName" placeholder="Cliente">
+        <input type="text" id="clientKey" placeholder="Clave (Ej: PF-889)">
+        <button class="btn-green" onclick="guardarClave()">Activar Clave</button>
+        <div id="adminUsersList"></div>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
-    db.collection("configuracion").doc("general").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('logoUrl').value = doc.data().logoUrl || '';
-            document.getElementById('wsNum').value = doc.data().whatsapp || '';
+    // Inicialización y carga de datos
+    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+        try {
+            const list = document.getElementById('adminPostsList');
+            const statsArea = document.getElementById('accordionStats');
+            list.innerHTML = '';
+            statsArea.innerHTML = '';
+
+            if(snapshot.empty) {
+                list.innerHTML = '<p>No hay pronósticos.</p>';
+                return;
+            }
+
+            let agrupados = {};
+            let statsDeporte = {};
+
+            snapshot.forEach((doc) => {
+                const p = doc.data();
+                const cat = p.categoria || 'SIN CATEGORÍA';
+                
+                if(!agrupados[cat]) agrupados[cat] = [];
+                agrupados[cat].push({ id: doc.id, ...p });
+
+                if(!statsDeporte[cat]) statsDeporte[cat] = { wins: 0, loses: 0, cuotas: {} };
+                if(p.estatus === 'win') statsDeporte[cat].wins++;
+                if(p.estatus === 'lose') statsDeporte[cat].loses++;
+
+                const cVal = p.cuota || 'GENERAL';
+                if(!statsDeporte[cat].cuotas[cVal]) statsDeporte[cat].cuotas[cVal] = { wins: 0, loses: 0 };
+                if(p.estatus === 'win') statsDeporte[cat].cuotas[cVal].wins++;
+                if(p.estatus === 'lose') statsDeporte[cat].cuotas[cVal].loses++;
+            });
+
+            // Renderizado de Stats
+            Object.keys(statsDeporte).forEach(deporte => {
+                const d = statsDeporte[deporte];
+                const total = d.wins + d.loses;
+                const efec = total > 0 ? ((d.wins / total) * 100).toFixed(0) : 0;
+                
+                statsArea.innerHTML += `
+                    <details>
+                        <summary>${deporte}: ${efec}% efectividad</summary>
+                        <div class="accordion-content">
+                            <p>Wins: ${d.wins} | Loses: ${d.loses}</p>
+                        </div>
+                    </details>`;
+            });
+
+            // Renderizado de Lista
+            Object.keys(agrupados).forEach(cat => {
+                let items = '';
+                agrupados[cat].forEach(p => {
+                    items += `
+                        <div class="item-list">
+                            <span class="tag-status ${p.estatus === 'win' ? 'status-win' : p.estatus === 'lose' ? 'status-lose' : 'status-pending'}">${p.estatus || 'pendiente'}</span>
+                            <b>${p.titulo}</b><br>
+                            <span class="cuota-badge">${p.cuota || 'N/A'}</span>
+                            <div class="btn-group">
+                                <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">WIN</button>
+                                <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">LOSE</button>
+                                <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️</button>
+                            </div>
+                        </div>`;
+                });
+                list.innerHTML += `<details><summary>${cat} (${agrupados[cat].length})</summary><div class="accordion-content">${items}</div></details>`;
+            });
+        } catch(e) {
+            console.error("Error cargando datos:", e);
+            document.getElementById('adminPostsList').innerHTML = "Error al cargar. Revisa la consola.";
         }
     });
 
-    db.collection("configuracion").doc("pagos").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('pmData').value = doc.data().pagoMovil || '';
-            document.getElementById('binanceData').value = doc.data().binance || '';
-            document.getElementById('otrosData').value = doc.data().otros || '';
-        }
-    });
-
-    function guardarConfigGeneral() {
-        const logo = document.getElementById('logoUrl').value.trim();
-        const ws = document.getElementById('wsNum').value.trim();
-        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
-        .then(() => alert("✔ Logo y WhatsApp guardados."));
-    }
-
-    function guardarConfigPagos() {
-        const pm = document.getElementById('pmData').value.trim();
-        const binance = document.getElementById('binanceData').value.trim();
-        const otros = document.getElementById('otrosData').value.trim();
-        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
-        .then(() => alert("✔ Métodos de pago guardados."));
-    }
-
+    // Funciones básicas corregidas
+    function cambiarEstatus(id, status) { db.collection("pronosticos").doc(id).update({ estatus: status }); }
+    function eliminarPronostico(id) { if(confirm("¿Eliminar?")) db.collection("pronosticos").doc(id).delete(); }
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
-        const tipo = document.getElementById('postType').value;
-        const odds = document.getElementById('postOdds').value.trim() || 'GENERAL';
-        const titulo = document.getElementById('postTitle').value.trim();
-        const detalles = document.getElementById('postDetails').value.trim();
-        if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
-
+        const titulo = document.getElementById('postTitle').value;
+        if(!titulo) return alert("Falta título");
         db.collection("pronosticos").add({
             categoria: cat,
-            tipo: tipo,
-            cuota: odds,
             titulo: titulo,
-            detalles: detalles,
-            estatus: "pendiente",
+            cuota: document.getElementById('postOdds').value || 'N/A',
+            estatus: 'pendiente',
             fecha: new Date()
-        }).then(() => {
-            alert("🚀 Pronóstico publicado con éxito.");
-            document.getElementById('postTitle').value = '';
-            document.getElementById('postDetails').value = '';
-            document.getElementById('postOdds').value = '';
-        });
+        }).then(() => alert("Publicado"));
     }
-
-    // --- GESTIÓN DE NOTIFICACIONES ---
-    function enviarNotificacion() {
-        const titulo = document.getElementById('notifTitle').value.trim();
-        const mensaje = document.getElementById('notifMessage').value.trim();
-        if(!mensaje) return alert("Por favor escribe un mensaje.");
-
-        db.collection("notificaciones").add({
-            titulo: titulo || '📢 AVISO EN VIVO',
-            mensaje: mensaje,
-            fecha: new Date()
-        }).then(() => {
-            alert("📢 Aviso publicado.");
-            document.getElementById('notifTitle').value = '';
-            document.getElementById('notifMessage').value = '';
-        });
-    }
-
-    db.collection("notificaciones").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        const list = document.getElementById('adminNotifList');
-        list.innerHTML = '';
-
-        if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay avisos publicados.</p>';
-            return;
-        }
-
-        snapshot.forEach((doc) => {
-            const id = doc.id;
-            const n = doc.data();
-
-            list.innerHTML += `
-                <div class="item-list" style="border-left-color: #ff9800;">
-                    <b>${n.titulo}</b><br>
-                    <span style="color:#ccc;">${n.mensaje}</span>
-                    <div class="btn-group">
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="eliminarNotificacion('${id}')">🗑️ Eliminar Aviso</button>
-                    </div>
-                </div>
-            `;
-        });
-    });
-
-    function eliminarNotificacion(id) {
-        if(confirm("¿Seguro que deseas borrar este aviso?")) {
-            db.collection("notificaciones").doc(id).delete();
-        }
-    }
-
-    // --- PRONÓSTICOS Y ESTADÍSTICAS EN ACORDEÓN ---
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        const list = document.getElementById('adminPostsList');
-        const statsArea = document.getElementById('accordionStats');
-        
-        list.innerHTML = '';
-        statsArea.innerHTML = '';
-
-        if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
-            statsArea.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos para calcular.</p>';
-            return;
-        }
-
-        let agrupados = {};
-        let statsDeporte = {};
-
-        snapshot.forEach((doc) => {
-            const id = doc.id;
-            const p = doc.data();
-            const cat = p.categoria || 'VARIOS';
-
-            if(!agrupados[cat]) agrupados[cat] = [];
-            agrupados[cat].push({ id, ...p });
-
-            if(!statsDeporte[cat]) statsDeporte[cat] = { wins: 0, loses: 0, cuotas: {} };
-            
-            if(p.estatus === 'win') statsDeporte[cat].wins++;
-            if(p.estatus === 'lose') statsDeporte[cat].loses++;
-
-            const cuotaVal = p.cuota || 'GENERAL';
-            if(!statsDeporte[cat].cuotas[cuotaVal]) statsDeporte[cat].cuotas[cuotaVal] = { wins: 0, loses: 0 };
-            if(p.estatus === 'win') statsDeporte[cat].cuotas[cuotaVal].wins++;
-            if(p.estatus === 'lose') statsDeporte[cat].cuotas[cuotaVal].loses++;
-        });
-
-        // 1. RENDERIZAR ACORDEÓN DE ESTADÍSTICAS POR DEPORTE Y CUOTAS
-        Object.keys(statsDeporte).forEach(deporte => {
-            const d = statsDeporte[deporte];
-            const totalDep = d.wins + d.loses;
-            const efecDep = totalDep > 0 ? ((d.wins / totalDep) * 100).toFixed(1) : 0;
-
-            let cuotasHtml = '';
-            Object.keys(d.cuotas).forEach(c => {
-                const cWins = d.cuotas[c].wins;
-                const cLoses = d.cuotas[c].loses;
-                const cTotal = cWins + cLoses;
-                const cEfec = cTotal > 0 ? ((cWins / cTotal) * 100).toFixed(1) : 0;
-
-                cuotasHtml += `
-                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:3px 0; border-bottom:1px solid #333;">
-                        <span>Cuota/Logro: <b>${c}</b></span>
-                        <span><b style="color:#4caf50;">${cWins}W</b> - <b style="color:#f44336;">${cLoses}L</b> | <b style="color:var(--gold);">${cEfec}%</b></span>
-                    </div>
-                `;
-            });
-
-            statsArea.innerHTML += `
-                <details>
-                    <summary>
-                        <span>${deporte}</span>
-                        <span>Efectividad: <b style="color:#4caf50;">${efecDep}%</b></span>
-                    </summary>
-                    <div class="accordion-content">
-                        <div style="margin-bottom:8px; font-size:11px; color:#aaa;">
-                            Totales: <b style="color:#4caf50;">${d.wins} Verdes</b> / <b style="color:#f44336;">${d.loses} Rojos</b>
-                        </div>
-                        <p style="font-size:10px; color:var(--gold); margin-bottom:4px; font-weight:bold;">DESGLOSE POR CUOTA / LOGRO:</p>
-                        ${cuotasHtml}
-                    </div>
-                </details>
-            `;
-        });
-
-        // 2. RENDERIZAR ACORDEÓN DE PRONÓSTICOS POR DEPORTE
-        Object.keys(agrupados).forEach(deporte => {
-            let itemsHtml = '';
-            
-            agrupados[deporte].forEach(p => {
-                let badgeClass = 'status-pending';
-                if(p.estatus === 'win') badgeClass = 'status-win';
-                if(p.estatus === 'lose') badgeClass = 'status-lose';
-
-                itemsHtml += `
-                    <div class="item-list">
-                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
-                        <span class="cuota-badge">${p.cuota || 'GENERAL'}</span><br>
-                        <b>${p.titulo}</b>
-                        <p style="font-size:11px; color:#ccc; margin:4px 0;">${p.detalles}</p>
-                        <div class="btn-group">
-                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">🟢 WIN</button>
-                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">🔴 LOSE</button>
-                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${p.id}', 'pendiente')">⏳ RESET</button>
-                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            list.innerHTML += `
-                <details>
-                    <summary>
-                        <span>${deporte}</span>
-                        <span style="background:var(--red); color:#fff; padding:1px 6px; border-radius:10px; font-size:10px;">${agrupados[deporte].length}</span>
-                    </summary>
-                    <div class="accordion-content">
-                        ${itemsHtml}
-                    </div>
-                </details>
-            `;
-        });
-    });
-
-    function cambiarEstatus(id, nuevoEstatus) {
-        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
-    }
-
-    function eliminarPronostico(id) {
-        if(confirm("¿Seguro de eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete().then(() => {
-                alert("🗑️ Pronóstico eliminado con éxito.");
-            });
-        }
-    }
-
-    // --- GESTIÓN DE CLAVES Y USUARIOS VIP ---
-    function guardarClave() {
-        const cliente = document.getElementById('clientName').value.trim();
-        const clave = document.getElementById('clientKey').value.trim().toUpperCase();
-        if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
-
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
-        .then(() => {
-            alert(`✔ Clave ${clave} creada y activada.`);
-            document.getElementById('clientName').value = '';
-            document.getElementById('clientKey').value = '';
-        });
-    }
-
-    db.collection("claves").onSnapshot((snapshot) => {
-        const userList = document.getElementById('adminUsersList');
-        userList.innerHTML = '';
-
-        if(snapshot.empty) {
-            userList.innerHTML = '<p style="font-size:11px; color:#777;">No hay claves registradas.</p>';
-            return;
-        }
-
-        snapshot.forEach((doc) => {
-            const keyId = doc.id;
-            const u = doc.data();
-
-            userList.innerHTML += `
-                <div class="item-list">
-                    <b>Cliente:</b> ${u.cliente} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
-                    <b>Estado:</b> <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'ACTIVO (VIP)' : 'INACTIVO'}</span>
-                    <div class="btn-group">
-                        <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${keyId}', ${!u.activa})">
-                            ${u.activa ? '🚫 Quitar Acceso' : '✔ Dar Acceso'}
-                        </button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarClave('${keyId}')">🗑️</button>
-                    </div>
-                </div>
-            `;
-        });
-    });
-
-    function alternarAcceso(clave, nuevoEstado) {
-        db.collection("claves").doc(clave).update({ activa: nuevoEstado });
-    }
-
-    function eliminarClave(clave) {
-        if(confirm(`¿Seguro que deseas eliminar la clave ${clave}?`)) {
-            db.collection("claves").doc(clave).delete();
-    
+</script>
+</body>
+</html>
