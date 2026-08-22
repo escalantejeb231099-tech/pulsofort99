@@ -43,7 +43,7 @@
         
         <label>Deporte / Categoría:</label>
         <select id="postCat">
-            <option value="CARRERAS DE CABALLOS">🐎 CARRERAS DE CABALLOS</option>
+            <option value="HIPISMO">🐎 HIPISMO</option>
             <option value="MLB">⚾ MLB</option>
             <option value="NBA">🏀 NBA</option>
             <option value="NFL">🏈 NFL</option>
@@ -56,7 +56,7 @@
             <option value="COMBINADA">COMBINADA (PARLAY)</option>
         </select>
 
-        <label>Cuota / Momio / Logro (Ej: Alta 8.5, -120, Runline, Directa):</label>
+        <label>Cuota / Momio / Logro (Ej: Alta 8.5, -120, Runline):</label>
         <input type="text" id="postCuota" placeholder="Ej: Alta 8.5, -120, Runline +1.5">
 
         <label>Título / Partido:</label>
@@ -136,26 +136,29 @@
 
 <script src="firebase-config.js"></script>
 <script>
+    // CARGAR CONFIGURACIÓN GENERAL
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
             document.getElementById('wsNum').value = doc.data().whatsapp || '';
         }
-    });
+    }).catch(err => console.error("Error al cargar config general:", err));
 
+    // CARGAR MÉTODOS DE PAGO
     db.collection("configuracion").doc("pagos").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('pmData').value = doc.data().pagoMovil || '';
             document.getElementById('binanceData').value = doc.data().binance || '';
             document.getElementById('otrosData').value = doc.data().otros || '';
         }
-    });
+    }).catch(err => console.error("Error al cargar config pagos:", err));
 
     function guardarConfigGeneral() {
         const logo = document.getElementById('logoUrl').value.trim();
         const ws = document.getElementById('wsNum').value.trim();
         db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
-        .then(() => alert("✔ Logo y WhatsApp guardados."));
+        .then(() => alert("✔ Logo y WhatsApp guardados."))
+        .catch(err => alert("Error al guardar: " + err.message));
     }
 
     function guardarConfigPagos() {
@@ -163,7 +166,8 @@
         const binance = document.getElementById('binanceData').value.trim();
         const otros = document.getElementById('otrosData').value.trim();
         db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
-        .then(() => alert("✔ Métodos de pago guardados."));
+        .then(() => alert("✔ Métodos de pago guardados."))
+        .catch(err => alert("Error al guardar pagos: " + err.message));
     }
 
     function publicarPronostico() {
@@ -172,6 +176,7 @@
         const cuota = document.getElementById('postCuota').value.trim() || 'GENERAL';
         const titulo = document.getElementById('postTitle').value.trim();
         const detalles = document.getElementById('postDetails').value.trim();
+        
         if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
         db.collection("pronosticos").add({
@@ -181,16 +186,16 @@
             titulo: titulo,
             detalles: detalles,
             estatus: "pendiente",
-            fecha: new Date()
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postDetails').value = '';
             document.getElementById('postCuota').value = '';
-        });
+        }).catch(err => alert("Error al publicar: " + err.message));
     }
 
-    // --- NOTIFICACIONES / AVISOS CON OPCIÓN DE ELIMINAR ---
+    // --- ENVIAR Y GESTIONAR NOTIFICACIONES ---
     function enviarNotificacion() {
         const titulo = document.getElementById('notifTitle').value.trim();
         const mensaje = document.getElementById('notifMessage').value.trim();
@@ -199,16 +204,18 @@
         db.collection("notificaciones").add({
             titulo: titulo || '📢 AVISO',
             mensaje: mensaje,
-            fecha: new Date()
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             alert("📢 Aviso publicado.");
             document.getElementById('notifTitle').value = '';
             document.getElementById('notifMessage').value = '';
-        });
+        }).catch(err => alert("Error al enviar aviso: " + err.message));
     }
 
-    db.collection("notificaciones").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+    // LISTENER DE NOTIFICACIONES (SEGURO)
+    db.collection("notificaciones").onSnapshot((snapshot) => {
         const list = document.getElementById('adminNotifList');
+        if(!list) return;
         list.innerHTML = '';
 
         if(snapshot.empty) {
@@ -216,33 +223,44 @@
             return;
         }
 
-        snapshot.forEach((doc) => {
-            const id = doc.id;
-            const n = doc.data();
+        let docs = [];
+        snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+
+        docs.forEach((n) => {
+            const id = n.id;
+            const titulo = n.titulo || '📢 AVISO';
+            const mensaje = n.mensaje || '';
 
             list.innerHTML += `
                 <div class="item-list">
-                    <b>${n.titulo}</b><br>
-                    <span style="color:#ccc;">${n.mensaje}</span>
+                    <b>${titulo}</b><br>
+                    <span style="color:#ccc;">${mensaje}</span>
                     <div class="btn-group">
                         <button class="btn-sm" style="background:#b71c1c;" onclick="eliminarNotificacion('${id}')">🗑️ Eliminar Aviso</button>
                     </div>
                 </div>
             `;
         });
+    }, (error) => {
+        console.error("Error escuchando notificaciones:", error);
+        document.getElementById('adminNotifList').innerHTML = '<p style="font-size:11px; color:red;">Error al cargar avisos.</p>';
     });
 
     function eliminarNotificacion(id) {
+        if(!id) return;
         if(confirm("¿Seguro que deseas eliminar esta notificación?")) {
-            db.collection("notificaciones").doc(id).delete();
+            db.collection("notificaciones").doc(id).delete()
+            .then(() => alert("Aviso eliminado correctamente."))
+            .catch(err => alert("Error al borrar: " + err.message));
         }
     }
 
-    // --- PRONÓSTICOS Y CÁLCULO DE MOMIOS MÁS EFECTIVOS ---
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+    // --- LISTENER DE PRONÓSTICOS Y ESTADÍSTICAS POR MOMIO ---
+    db.collection("pronosticos").onSnapshot((snapshot) => {
         const list = document.getElementById('adminPostsList');
         const momiosArea = document.getElementById('adminMomiosStats');
         
+        if(!list || !momiosArea) return;
         list.innerHTML = '';
         momiosArea.innerHTML = '';
 
@@ -256,23 +274,29 @@
 
         snapshot.forEach((doc) => {
             const id = doc.id;
-            const p = doc.data();
-            let badgeClass = 'status-pending';
-            if(p.estatus === 'win') badgeClass = 'status-win';
-            if(p.estatus === 'lose') badgeClass = 'status-lose';
+            const p = doc.data() || {};
+            
+            const estatus = p.estatus || 'pendiente';
+            const tipo = p.tipo || 'DIRECTA';
+            const cuota = p.cuota || 'GENERAL';
+            const categoria = p.categoria || 'VARIOS';
+            const titulo = p.titulo || 'Sin Título';
 
-            // Agrupar métricas por Momio / Cuota
-            const momio = p.cuota || 'GENERAL';
-            if(!momioStats[momio]) momioStats[momio] = { wins: 0, loses: 0 };
-            if(p.estatus === 'win') momioStats[momio].wins++;
-            if(p.estatus === 'lose') momioStats[momio].loses++;
+            let badgeClass = 'status-pending';
+            if(estatus === 'win') badgeClass = 'status-win';
+            if(estatus === 'lose') badgeClass = 'status-lose';
+
+            // Agrupar por Momio / Cuota para métricas
+            if(!momioStats[cuota]) momioStats[cuota] = { wins: 0, loses: 0 };
+            if(estatus === 'win') momioStats[cuota].wins++;
+            if(estatus === 'lose') momioStats[cuota].loses++;
 
             list.innerHTML += `
                 <div class="item-list">
-                    <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
-                    <span class="cuota-badge">${p.cuota || 'GENERAL'}</span><br>
-                    <b>[${p.categoria}]</b> ${p.titulo}
+                    <span class="tag-status ${badgeClass}">${estatus}</span>
+                    <span class="type-badge">${tipo}</span>
+                    <span class="cuota-badge">${cuota}</span><br>
+                    <b>[${categoria}]</b> ${titulo}
                     <div class="btn-group">
                         <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
                         <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
@@ -297,35 +321,43 @@
                 </div>
             `;
         });
+    }, (error) => {
+        console.error("Error escuchando pronósticos:", error);
+        document.getElementById('adminPostsList').innerHTML = '<p style="font-size:11px; color:red;">Error al cargar pronósticos.</p>';
     });
 
     function cambiarEstatus(id, nuevoEstatus) {
-        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
+        if(!id) return;
+        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus })
+        .catch(err => alert("Error al cambiar estatus: " + err.message));
     }
 
     function eliminarPronostico(id) {
+        if(!id) return;
         if(confirm("¿Seguro de eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete().then(() => {
-                alert("🗑️ Pronóstico eliminado con éxito.");
-            });
+            db.collection("pronosticos").doc(id).delete()
+            .then(() => alert("🗑️ Pronóstico eliminado."))
+            .catch(err => alert("Error al eliminar: " + err.message));
         }
     }
 
+    // --- GESTIÓN DE CLAVES VIP ---
     function guardarClave() {
         const cliente = document.getElementById('clientName').value.trim();
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
         if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
 
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
+        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: firebase.firestore.FieldValue.serverTimestamp() })
         .then(() => {
             alert(`✔ Clave ${clave} creada y activada.`);
             document.getElementById('clientName').value = '';
             document.getElementById('clientKey').value = '';
-        });
+        }).catch(err => alert("Error al guardar clave: " + err.message));
     }
 
     db.collection("claves").onSnapshot((snapshot) => {
         const userList = document.getElementById('adminUsersList');
+        if(!userList) return;
         userList.innerHTML = '';
 
         if(snapshot.empty) {
@@ -335,11 +367,11 @@
 
         snapshot.forEach((doc) => {
             const keyId = doc.id;
-            const u = doc.data();
+            const u = doc.data() || {};
 
             userList.innerHTML += `
                 <div class="item-list">
-                    <b>Cliente:</b> ${u.cliente} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
+                    <b>Cliente:</b> ${u.cliente || 'Sin Nombre'} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
                     <b>Estado:</b> <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'ACTIVO (VIP)' : 'INACTIVO'}</span>
                     <div class="btn-group">
                         <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${keyId}', ${!u.activa})">
@@ -350,15 +382,22 @@
                 </div>
             `;
         });
+    }, (error) => {
+        console.error("Error escuchando claves:", error);
     });
 
     function alternarAcceso(clave, nuevoEstado) {
-        db.collection("claves").doc(clave).update({ activa: nuevoEstado });
+        if(!clave) return;
+        db.collection("claves").doc(clave).update({ activa: nuevoEstado })
+        .catch(err => alert("Error al modificar clave: " + err.message));
     }
 
     function eliminarClave(clave) {
+        if(!clave) return;
         if(confirm(`¿Seguro que deseas eliminar la clave ${clave}?`)) {
-            db.collection("claves").doc(clave).delete();
+            db.collection("claves").doc(clave).delete()
+            .then(() => alert("Clave eliminada."))
+            .catch(err => alert("Error al borrar clave: " + err.message));
         }
     }
 </script>
