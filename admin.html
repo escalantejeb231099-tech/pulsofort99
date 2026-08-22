@@ -28,6 +28,9 @@
         .status-lose { background: #b71c1c; color: #fff; }
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        
+        .checkbox-container { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .checkbox-container input { width: auto; margin: 0; }
     </style>
 </head>
 <body>
@@ -37,7 +40,7 @@
         <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
     </div>
 
-    <!-- 1. PUBLICAR PRONÓSTICO -->
+    <!-- 1. PUBLICAR PRONÓSTICO & NOTIFICACIÓN -->
     <div class="card">
         <h3>🚀 Publicar Nuevo Pronóstico</h3>
         
@@ -59,25 +62,37 @@
         <label>Título / Partido:</label>
         <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
         
-        <label>Logro / Cuota / Momio (Ej: -140, Runline, Ganador):</label>
+        <label>Logro / Cuota / Momio:</label>
         <input type="text" id="postLogro" placeholder="Ej: -140" style="text-transform:uppercase;">
 
         <label>Detalles del Pronóstico:</label>
         <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
         
+        <div class="checkbox-container">
+            <input type="checkbox" id="sendNotifCheck" checked>
+            <label for="sendNotifCheck" style="font-weight:bold; color:var(--gold);">🔔 Crear aviso/notificación al publicar</label>
+        </div>
+
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. GESTIONAR PRONÓSTICOS -->
+    <!-- 2. PUBLICAR AVISO RÁPIDO (OPCIONAL) -->
+    <div class="card">
+        <h3>📢 Enviar Aviso Directo</h3>
+        <input type="text" id="notifDirectaTitulo" placeholder="Título del Aviso (Ej: ¡Alerta VIP!)">
+        <textarea id="notifDirectaTexto" rows="2" placeholder="Mensaje para la comunidad..."></textarea>
+        <button class="btn-orange" onclick="enviarAvisoDirecto()">Publicar Aviso Solo</button>
+    </div>
+
+    <!-- 3. GESTIONAR PRONÓSTICOS -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
     </div>
 
-    <!-- 3. ACTIVAR Y CONTROLAR USUARIOS VIP -->
+    <!-- 4. GESTIÓN VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
@@ -90,7 +105,7 @@
         </div>
     </div>
 
-    <!-- 4. CONFIGURACIONES GENERALES -->
+    <!-- 5. CONFIGURACIONES GENERALES -->
     <div class="card">
         <h3>🖼️ Configurar Logo y WhatsApp</h3>
         <label>URL del Logo:</label>
@@ -100,7 +115,7 @@
         <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
     </div>
 
-    <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
+    <!-- 6. CONFIGURAR MÉTODOS DE PAGO -->
     <div class="card">
         <h3>💳 Configurar Métodos de Pago</h3>
         <label>Pago Móvil:</label>
@@ -114,7 +129,6 @@
 </div>
 
 <script>
-    // Función segura para calcular fechas
     function obtenerTiempoMillis(fechaCampo) {
         if (!fechaCampo) return new Date().getTime();
         try {
@@ -163,6 +177,7 @@
         const titulo = document.getElementById('postTitle').value.trim();
         const logro = document.getElementById('postLogro').value.trim().toUpperCase() || 'GENERAL';
         const detalles = document.getElementById('postDetails').value.trim();
+        const crearNotif = document.getElementById('sendNotifCheck').checked;
         
         if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
@@ -175,15 +190,38 @@
             estatus: "pendiente",
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            alert("🚀 Pronóstico publicado con éxito.");
+            if (crearNotif) {
+                db.collection("notificaciones").add({
+                    titulo: `🔥 NUEVO PRONÓSTICO: ${cat}`,
+                    mensaje: `${tipo}: ${titulo} (${logro})`,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            alert("🚀 Pronóstico y aviso publicados con éxito.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postLogro').value = '';
             document.getElementById('postDetails').value = '';
-        });
+        }).catch((err) => alert("Error: " + err.message));
+    }
+
+    function enviarAvisoDirecto() {
+        const titulo = document.getElementById('notifDirectaTitulo').value.trim();
+        const mensaje = document.getElementById('notifDirectaTexto').value.trim();
+
+        if (!mensaje) return alert("Escribe un mensaje para la notificación.");
+
+        db.collection("notificaciones").add({
+            titulo: titulo || '📢 AVISO PULSOFORT99',
+            mensaje: mensaje,
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("✔ Aviso enviado correctamente.");
+            document.getElementById('notifDirectaTitulo').value = '';
+            document.getElementById('notifDirectaTexto').value = '';
+        }).catch((err) => alert("Error: " + err.message));
     }
 
     if (typeof db !== 'undefined') {
-        // LECTURA ORDENADA MANUALMENTE (EVITA FALLOS DE ÍNDICE EN FIRESTORE)
         db.collection("pronosticos").onSnapshot((snapshot) => {
             const list = document.getElementById('adminPostsList');
             list.innerHTML = '';
@@ -286,5 +324,4 @@
     }
 </script>
 </body>
-                                                                          </html>
-                                                                          
+</html>
