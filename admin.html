@@ -18,6 +18,7 @@
         button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
         .btn-green { background: var(--green); }
         .btn-orange { background: #e65100; }
+        .btn-blue { background: #1976d2; }
         
         /* BOTONES DE DEPORTES CON INTERFAZ DESPLEGABLE */
         .sport-accordion { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
@@ -80,7 +81,22 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. PANTALLA PRINCIPAL: PRONÓSTICOS ÚLTIMAS 24 HORAS -->
+    <!-- 2. NOTIFICACIONES Y COMUNICADOS A USUARIOS -->
+    <div class="card">
+        <h3>🔔 Enviar Notificación / Mensaje General</h3>
+        <label>Título de la Notificación:</label>
+        <input type="text" id="notifTitle" placeholder="Ej: ¡Nuevos pronósticos disponibles!">
+        <label>Mensaje:</label>
+        <textarea id="notifBody" rows="2" placeholder="Escribe el aviso para todos los usuarios..."></textarea>
+        <button class="btn-blue" onclick="enviarNotificacion()">Enviar Notificación</button>
+        
+        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Últimas Notificaciones Enviadas:</h4>
+        <div id="notifHistoryList">
+            <p style="font-size:11px; color:#777;">Cargando historial de notificaciones...</p>
+        </div>
+    </div>
+
+    <!-- 3. PANTALLA PRINCIPAL: PRONÓSTICOS ÚLTIMAS 24 HORAS -->
     <div class="card">
         <h3>🔥 Inicio: Pronósticos Recientes (24h)</h3>
         <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Pronósticos del día. Al pasar las 24h se archivan automáticamente en el histórico.</p>
@@ -89,7 +105,7 @@
         </div>
     </div>
 
-    <!-- 3. ARCHIVO HISTÓRICO POR DEPORTE (ACORDEÓN OCULTO/DESPLEGABLE) -->
+    <!-- 4. ARCHIVO HISTÓRICO POR DEPORTE (ACORDEÓN OCULTO/DESPLEGABLE) -->
     <div class="card">
         <h3>📂 Archivo Histórico por Deporte</h3>
         <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en un deporte para desplegar las cuotas/momios y sus juegos.</p>
@@ -98,7 +114,7 @@
         </div>
     </div>
 
-    <!-- 4. GESTIÓN DE CLAVES Y ACCESO VIP -->
+    <!-- 5. GESTIÓN DE CLAVES Y ACCESO VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
@@ -109,7 +125,7 @@
         <div id="adminUsersList"></div>
     </div>
 
-    <!-- 5. CONFIGURACIONES GENERALES -->
+    <!-- 6. CONFIGURACIONES GENERALES -->
     <div class="card">
         <h3>🖼️ Logo y WhatsApp</h3>
         <input type="text" id="logoUrl" placeholder="URL del Logo">
@@ -117,7 +133,7 @@
         <button onclick="guardarConfigGeneral()">Guardar Configuración</button>
     </div>
 
-    <!-- 6. MÉTODOS DE PAGO -->
+    <!-- 7. MÉTODOS DE PAGO -->
     <div class="card">
         <h3>💳 Métodos de Pago</h3>
         <textarea id="pmData" rows="2" placeholder="Pago Móvil..."></textarea>
@@ -160,6 +176,49 @@
         }, { merge: true }).then(() => alert("✔ Métodos guardados con éxito."));
     }
 
+    // ENVIAR Y GESTIONAR NOTIFICACIONES
+    function enviarNotificacion() {
+        const titulo = document.getElementById('notifTitle').value.trim();
+        const mensaje = document.getElementById('notifBody').value.trim();
+
+        if(!titulo || !mensaje) return alert("Por favor escribe el título y mensaje de la notificación.");
+
+        db.collection("notificaciones").add({
+            titulo: titulo,
+            mensaje: mensaje,
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("🔔 Notificación enviada con éxito.");
+            document.getElementById('notifTitle').value = '';
+            document.getElementById('notifBody').value = '';
+        });
+    }
+
+    db.collection("notificaciones").orderBy("fecha", "desc").limit(5).onSnapshot((snapshot) => {
+        const list = document.getElementById('notifHistoryList');
+        list.innerHTML = '';
+        if(snapshot.empty) {
+            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay notificaciones recientes.</p>';
+            return;
+        }
+        snapshot.forEach((doc) => {
+            const n = doc.data();
+            list.innerHTML += `
+                <div class="item-list" style="border-left-color: #1976d2;">
+                    <b>${n.titulo}</b><br>
+                    <span style="color:#ccc; font-size:11px;">${n.mensaje}</span>
+                    <button class="btn-sm" style="background:#444; margin-top:5px;" onclick="eliminarNotificacion('${doc.id}')">🗑️ Eliminar</button>
+                </div>
+            `;
+        });
+    });
+
+    function eliminarNotificacion(id) {
+        if(confirm("¿Eliminar esta notificación?")) {
+            db.collection("notificaciones").doc(id).delete();
+        }
+    }
+
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
         const tipo = document.getElementById('postType').value;
@@ -169,7 +228,6 @@
         
         if(!titulo) return alert("Ingresa un título para el partido.");
 
-        // DETECTAR AUTOMÁTICAMENTE LA CUOTA/MOMIO DE LOS DETALLES SI NO SE INDICA
         if(!logro && detalles) {
             const match = detalles.match(/(-|\+)?\d{3,4}/);
             if(match) logro = match[0];
@@ -192,7 +250,7 @@
         });
     }
 
-    // LISTENER EN TIEMPO REAL
+    // LISTENER DE PRONÓSTICOS EN TIEMPO REAL
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const active24hList = document.getElementById('active24hList');
         const accordionContainer = document.getElementById('sportsAccordionContainer');
@@ -219,7 +277,6 @@
             const esReciente = (ahora - fechaPost) <= limite24h;
             const deporte = p.categoria || "VARIOS";
 
-            // EXTRAER Y CLASIFICAR EL MOMIO/CUOTA (EJ: -140, -149, RUNLINE, ETC)
             let logroTag = p.logro ? p.logro.toUpperCase() : 'GENERAL';
             if((logroTag === 'GENERAL' || !logroTag) && p.detalles) {
                 const match = p.detalles.match(/(-|\+)?\d{3,4}/);
@@ -280,7 +337,6 @@
         for(const dep in deportesMap) {
             const depData = deportesMap[dep];
             
-            // CONSTRUIR ESTADÍSTICAS HORIZONTALES POR CUOTA/MOMIO
             let logrosHTML = '<div class="logros-row">';
             let tieneMetricas = false;
 
@@ -363,25 +419,4 @@
                     <b>${u.cliente}</b> (${doc.id}) - 
                     <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'VIP ACTIVO' : 'INACTIVO'}</span>
                     <div class="btn-group">
-                        <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${doc.id}', ${!u.activa})">
-                            ${u.activa ? '🚫 Desactivar' : '✔ Activar'}
-                        </button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarClave('${doc.id}')">🗑️</button>
-                    </div>
-                </div>
-            `;
-        });
-    });
-
-    function alternarAcceso(clave, nuevoEstado) {
-        db.collection("claves").doc(clave).update({ activa: nuevoEstado });
-    }
-
-    function eliminarClave(clave) {
-        if(confirm(`¿Eliminar la clave ${clave}?`)) {
-            db.collection("claves").doc(clave).delete();
-        }
-    }
-</script>
-</body>
-</html>
+                        <button class="btn-sm ${u.activa ? 'btn-
