@@ -28,7 +28,13 @@
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         
-        .stat-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid #333; }
+        /* Navegación por Pestañas */
+        .tab-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
+        .tab-scroll::-webkit-scrollbar { display: none; }
+        .tab-btn { background: #2a2a2a; color: #ccc; border: 1px solid #444; padding: 6px 12px; border-radius: 15px; font-size: 10px; white-space: nowrap; cursor: pointer; width: auto; margin: 0; }
+        .tab-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: bold; }
+
+        .stat-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-bottom: 1px solid #333; }
         .stat-row:last-child { border-bottom: none; }
     </style>
 </head>
@@ -52,7 +58,7 @@
             <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
         
-        <label>Tipo de Jugada / Logro:</label>
+        <label>Tipo de Jugada:</label>
         <select id="postType">
             <option value="DIRECTA">🎯 DIRECTA</option>
             <option value="PARLAY">🔥 COMBINADA (PARLAY)</option>
@@ -62,11 +68,11 @@
             <option value="RUNLINE">⚾ RUNLINE / SPREAD</option>
         </select>
 
-        <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Dodgers (-150) vs Yankees / 5ta Válida La Rinconada">
+        <label>Título / Partido / Equipo y Logro:</label>
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers -150 / Yankees RL-1.5 / 5ta Válida La Rinconada">
         
         <label>Detalles del Pronóstico:</label>
-        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada, logro y cuota..."></textarea>
+        <textarea id="postDetails" rows="3" placeholder="Ingresa los detalles, jugada y logros (-140, +120)..."></textarea>
 
         <label style="font-size: 11px; display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--gold);">
             <input type="checkbox" id="pushNotif" checked style="width: auto; margin: 0;"> 🔔 Enviar Notificación Push
@@ -75,19 +81,30 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. ESTADÍSTICAS Y RENDIMIENTO DE LOGROS POR DEPORTE -->
+    <!-- 2. ESTADÍSTICAS Y RENDIMIENTO DE LOGROS Extraídos -->
     <div class="card">
-        <h3>📈 Rendimiento de Logros y Jugadas Aceptadas</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:8px;">Aciertos (WIN) desglosados por tipo de jugada y disciplina:</p>
+        <h3>📈 Análisis e Historial de Logros por Equipo</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:8px;">Seguimiento automático de aciertos por línea/logro detectado:</p>
         <div id="logrosStatsList">
-            <p style="font-size:11px; color:#777;">Calculando estadísticas...</p>
+            <p style="font-size:11px; color:#777;">Procesando historial...</p>
         </div>
     </div>
 
     <!-- 3. GESTIONAR PRONÓSTICOS -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
+        
+        <!-- Pestañas de Filtro por Deporte y 24H -->
+        <div class="tab-scroll">
+            <button class="tab-btn active" onclick="filtrarAdminTab('24H', this)">🔥 ÚLTIMAS 24H</button>
+            <button class="tab-btn" onclick="filtrarAdminTab('TODOS', this)">📋 TODOS</button>
+            <button class="tab-btn" onclick="filtrarAdminTab('HIPISMO', this)">🐎 HIPISMO</button>
+            <button class="tab-btn" onclick="filtrarAdminTab('MLB', this)">⚾ MLB</button>
+            <button class="tab-btn" onclick="filtrarAdminTab('NBA', this)">🏀 NBA</button>
+            <button class="tab-btn" onclick="filtrarAdminTab('NFL', this)">🏈 NFL</button>
+            <button class="tab-btn" onclick="filtrarAdminTab('FUTBOL', this)">⚽ FÚTBOL</button>
+        </div>
+
         <div id="adminPostsList">
             <p style="font-size:11px; color:#777;">Cargando lista...</p>
         </div>
@@ -131,6 +148,9 @@
 
 <script src="firebase-config.js"></script>
 <script>
+    let todosLosPronosticosAdmin = [];
+    let tabActual = '24H';
+
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
@@ -191,38 +211,107 @@
         });
     }
 
+    function extraerLogroTexto(texto) {
+        // Busca patrones de logros numéricos como -150, +120, @1.85, RL-1.5, etc.
+        const patron = /([a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+)?([\+\-]\d{2,4}|RL[\+\-]?\d?\.?\d?|@\d\.?\d*)/gi;
+        const coincidencias = texto.match(patron);
+        return coincidencias ? coincidencias.map(c => c.trim()) : [];
+    }
+
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        const list = document.getElementById('adminPostsList');
-        const statsList = document.getElementById('logrosStatsList');
-        
-        list.innerHTML = '';
-        statsList.innerHTML = '';
-
-        if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
-            statsList.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos registrados aún.</p>';
-            return;
-        }
-
+        todosLosPronosticosAdmin = [];
         let conteoLogros = {};
 
         snapshot.forEach((doc) => {
-            const id = doc.id;
-            const p = doc.data();
+            const item = doc.data();
+            item.id = doc.id;
+            
+            let fechaObj = item.fecha ? (item.fecha.toDate ? item.fecha.toDate() : new Date(item.fecha)) : new Date();
+            item.fechaObj = fechaObj;
+            
+            todosLosPronosticosAdmin.push(item);
+
+            // Analizar texto para extracción de Logro / Línea / Equipo
+            const textoAnalizar = `${item.titulo} ${item.detalles}`;
+            const logrosHallados = extraerLogroTexto(textoAnalizar);
+
+            if (logrosHallados.length > 0) {
+                logrosHallados.forEach(logroStr => {
+                    const claveLogro = `[${item.categoria}] ${logroStr}`;
+                    if(!conteoLogros[claveLogro]) conteoLogros[claveLogro] = { win: 0, lose: 0 };
+                    if(item.estatus === 'win') conteoLogros[claveLogro].win++;
+                    if(item.estatus === 'lose') conteoLogros[claveLogro].lose++;
+                });
+            } else {
+                const claveFallback = `[${item.categoria}] ${item.titulo.substring(0, 25)}`;
+                if(!conteoLogros[claveFallback]) conteoLogros[claveFallback] = { win: 0, lose: 0 };
+                if(item.estatus === 'win') conteoLogros[claveFallback].win++;
+                if(item.estatus === 'lose') conteoLogros[claveFallback].lose++;
+            }
+        });
+
+        // Renderizar Métricas de Logros
+        const statsList = document.getElementById('logrosStatsList');
+        statsList.innerHTML = '';
+        const llavesLogros = Object.keys(conteoLogros);
+
+        if (llavesLogros.length === 0) {
+            statsList.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos de logros detectados.</p>';
+        } else {
+            llavesLogros.slice(0, 8).forEach((key) => {
+                const data = conteoLogros[key];
+                const total = data.win + data.lose;
+                const efec = total > 0 ? ((data.win / total) * 100).toFixed(0) : 0;
+                
+                statsList.innerHTML += `
+                    <div class="stat-row">
+                        <span style="color:#ddd; font-weight:600;">${key}</span>
+                        <span>
+                            <b style="color:#4caf50;">${data.win}W</b> - <b style="color:#f44336;">${data.lose}L</b> 
+                            <b style="color:var(--gold); margin-left:5px;">(${efec}%)</b>
+                        </span>
+                    </div>
+                `;
+            });
+        }
+
+        renderizarAdminPosts();
+    });
+
+    function filtrarAdminTab(tab, btn) {
+        tabActual = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderizarAdminPosts();
+    }
+
+    function renderizarAdminPosts() {
+        const list = document.getElementById('adminPostsList');
+        list.innerHTML = '';
+
+        const ahora = new Date().getTime();
+        const limite24H = 24 * 60 * 60 * 1000;
+
+        let filtrados = [];
+
+        if (tabActual === '24H') {
+            filtrados = todosLosPronosticosAdmin.filter(p => (ahora - p.fechaObj.getTime()) <= limite24H);
+        } else if (tabActual === 'TODOS') {
+            filtrados = todosLosPronosticosAdmin;
+        } else {
+            filtrados = todosLosPronosticosAdmin.filter(p => p.categoria.toUpperCase().includes(tabActual));
+        }
+
+        if (filtrados.length === 0) {
+            list.innerHTML = `<p style="font-size:11px; color:#777; text-align:center; padding:10px;">No hay jugadas registradas en esta sección.</p>`;
+            return;
+        }
+
+        filtrados.forEach((p) => {
             let badgeClass = 'status-pending';
             if(p.estatus === 'win') badgeClass = 'status-win';
             if(p.estatus === 'lose') badgeClass = 'status-lose';
 
-            // Mapeo de Estadísticas por Deporte y Tipo de Logro
-            const claveDeporteTipo = `${p.categoria} | ${p.tipo || 'DIRECTA'}`;
-            if(!conteoLogros[claveDeporteTipo]) {
-                conteoLogros[claveDeporteTipo] = { win: 0, lose: 0, total: 0 };
-            }
-            conteoLogros[claveDeporteTipo].total++;
-            if(p.estatus === 'win') conteoLogros[claveDeporteTipo].win++;
-            if(p.estatus === 'lose') conteoLogros[claveDeporteTipo].lose++;
-
-            // Mapeo en lista con tipo de jugada visible y detalles
             list.innerHTML += `
                 <div class="item-list">
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
@@ -231,30 +320,15 @@
                     <b style="font-size:13px; color:#fff;">${p.titulo}</b>
                     <p style="color:#ccc; font-size:11px; margin:4px 0; white-space: pre-line;">${p.detalles}</p>
                     <div class="btn-group">
-                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
-                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
+                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">🟢 WIN</button>
+                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">🔴 LOSE</button>
+                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${p.id}', 'pendiente')">⏳ PENDIENTE</button>
+                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️ Borrar</button>
                     </div>
                 </div>
             `;
         });
-
-        // Renderizar Cuadro de Rendimiento por Logros
-        Object.keys(conteoLogros).forEach((key) => {
-            const item = conteoLogros[key];
-            const efec = item.win + item.lose > 0 ? ((item.win / (item.win + item.lose)) * 100).toFixed(0) : 0;
-            statsList.innerHTML += `
-                <div class="stat-row">
-                    <span style="color:#ddd; font-weight:600;">${key}</span>
-                    <span>
-                        <b style="color:#4caf50;">${item.win}W</b> - <b style="color:#f44336;">${item.lose}L</b> 
-                        <b style="color:var(--gold); margin-left:5px;">(${efec}%)</b>
-                    </span>
-                </div>
-            `;
-        });
-    });
+    }
 
     function cambiarEstatus(id, nuevoEstatus) {
         db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
