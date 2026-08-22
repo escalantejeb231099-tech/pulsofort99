@@ -28,6 +28,13 @@
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .cuota-badge { background: #1a237e; color: #90caf9; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+
+        details { background: #181818; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+        summary { padding: 12px; font-size: 13px; font-weight: bold; color: var(--gold); cursor: pointer; background: #222; display: flex; justify-content: space-between; align-items: center; }
+        summary::after { content: "►"; font-size: 10px; color: #aaa; }
+        details[open] summary::after { content: "▼"; color: var(--gold); }
+        .accordion-content { padding: 10px; }
+        .stats-box { background: #111; padding: 8px; border-radius: 6px; margin-bottom: 10px; border: 1px dashed var(--gold); font-size: 11px; }
     </style>
 </head>
 <body>
@@ -40,7 +47,6 @@
     <!-- 1. PUBLICAR PRONÓSTICO -->
     <div class="card">
         <h3>🚀 Publicar Nuevo Pronóstico</h3>
-        
         <label>Deporte / Categoría:</label>
         <select id="postCat">
             <option value="HIPISMO">🐎 HIPISMO</option>
@@ -56,11 +62,11 @@
             <option value="COMBINADA">COMBINADA (PARLAY)</option>
         </select>
 
-        <label>Cuota / Momio / Logro (Ej: Alta 8.5, -120, Runline):</label>
-        <input type="text" id="postCuota" placeholder="Ej: Alta 8.5, -120, Runline +1.5">
+        <label>Cuota / Momio / Logro:</label>
+        <input type="text" id="postCuota" placeholder="Ej: Alta 8.5, -120">
 
         <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees">
         
         <label>Detalles del Pronóstico:</label>
         <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
@@ -68,106 +74,48 @@
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- NOTIFICACIONES Y AVISOS -->
+    <!-- 2. GESTIÓN POR ACORDEÓN -->
     <div class="card">
-        <h3>📢 Enviar y Gestionar Notificaciones</h3>
-        <input type="text" id="notifTitle" placeholder="Título del Aviso">
-        <textarea id="notifMessage" rows="2" placeholder="Mensaje del aviso..."></textarea>
-        <button class="btn-orange" onclick="enviarNotificacion()">Enviar Aviso</button>
-
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Avisos Enviados:</h4>
-        <div id="adminNotifList">
-            <p style="font-size:11px; color:#777;">Cargando avisos...</p>
+        <h3>📊 Gestión de Pronósticos por Deporte</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Clic en cada deporte para ver jugadas y efectividad.</p>
+        <div id="adminAccordionList">
+            <p style="font-size:11px; color:#777;">Cargando...</p>
         </div>
     </div>
 
-    <!-- MÉTRICAS DE EFECTIVIDAD POR MOMIO / CUOTA -->
-    <div class="card">
-        <h3>📈 Efectividad por Momio / Cuotas</h3>
-        <div id="adminMomiosStats">
-            <p style="font-size:11px; color:#777;">Calculando efectividad de momios...</p>
-        </div>
-    </div>
-
-    <!-- 2. GESTIONAR PRONÓSTICOS -->
-    <div class="card">
-        <h3>📊 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
-        <div id="adminPostsList">
-            <p style="font-size:11px; color:#777;">Cargando lista...</p>
-        </div>
-    </div>
-
-    <!-- 3. ACTIVAR Y CONTROLAR USUARIOS VIP -->
+    <!-- 3. GESTIÓN VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
         <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
         <button class="btn-green" onclick="guardarClave()">Activar Nueva Clave VIP</button>
-
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Lista de Claves Activas / Inactivas:</h4>
-        <div id="adminUsersList">
-            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
-        </div>
+        <div id="adminUsersList" style="margin-top:15px;"></div>
     </div>
 
-    <!-- 4. CONFIGURACIONES GENERALES -->
+    <!-- 4. CONFIGURACIONES -->
     <div class="card">
-        <h3>🖼️ Configurar Logo y WhatsApp</h3>
-        <label>URL del Logo:</label>
-        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
-        <label>Número de WhatsApp:</label>
-        <input type="text" id="wsNum" placeholder="+584121234567">
-        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
-    </div>
-
-    <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
-    <div class="card">
-        <h3>💳 Configurar Métodos de Pago</h3>
-        <label>Pago Móvil:</label>
-        <textarea id="pmData" rows="2" placeholder="Banco, Cédula, Teléfono..."></textarea>
-        <label>Binance Pay:</label>
-        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
-        <label>Otros Métodos:</label>
-        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
-        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
+        <h3>🖼️ Configurar Logo y Contacto</h3>
+        <input type="text" id="logoUrl" placeholder="URL del Logo">
+        <input type="text" id="wsNum" placeholder="WhatsApp">
+        <button onclick="guardarConfigGeneral()">Guardar Config</button>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
-    // CARGAR CONFIGURACIÓN GENERAL
+    // CARGAR CONFIG
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
             document.getElementById('wsNum').value = doc.data().whatsapp || '';
         }
-    }).catch(err => console.error("Error al cargar config general:", err));
-
-    // CARGAR MÉTODOS DE PAGO
-    db.collection("configuracion").doc("pagos").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('pmData').value = doc.data().pagoMovil || '';
-            document.getElementById('binanceData').value = doc.data().binance || '';
-            document.getElementById('otrosData').value = doc.data().otros || '';
-        }
-    }).catch(err => console.error("Error al cargar config pagos:", err));
+    });
 
     function guardarConfigGeneral() {
-        const logo = document.getElementById('logoUrl').value.trim();
-        const ws = document.getElementById('wsNum').value.trim();
-        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
-        .then(() => alert("✔ Logo y WhatsApp guardados."))
-        .catch(err => alert("Error al guardar: " + err.message));
-    }
-
-    function guardarConfigPagos() {
-        const pm = document.getElementById('pmData').value.trim();
-        const binance = document.getElementById('binanceData').value.trim();
-        const otros = document.getElementById('otrosData').value.trim();
-        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
-        .then(() => alert("✔ Métodos de pago guardados."))
-        .catch(err => alert("Error al guardar pagos: " + err.message));
+        db.collection("configuracion").doc("general").set({
+            logoUrl: document.getElementById('logoUrl').value.trim(),
+            whatsapp: document.getElementById('wsNum').value.trim()
+        }, { merge: true }).then(() => alert("✔ Guardado."));
     }
 
     function publicarPronostico() {
@@ -176,230 +124,73 @@
         const cuota = document.getElementById('postCuota').value.trim() || 'GENERAL';
         const titulo = document.getElementById('postTitle').value.trim();
         const detalles = document.getElementById('postDetails').value.trim();
-        
-        if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
+        if(!titulo || !detalles) return alert("Completa los datos.");
 
         db.collection("pronosticos").add({
-            categoria: cat,
-            tipo: tipo,
-            cuota: cuota,
-            titulo: titulo,
-            detalles: detalles,
-            estatus: "pendiente",
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
+            categoria: cat, tipo: tipo, cuota: cuota, titulo: titulo, detalles: detalles,
+            estatus: "pendiente", fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            alert("🚀 Pronóstico publicado con éxito.");
+            alert("🚀 Publicado.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postDetails').value = '';
             document.getElementById('postCuota').value = '';
-        }).catch(err => alert("Error al publicar: " + err.message));
-    }
-
-    // --- ENVIAR Y GESTIONAR NOTIFICACIONES ---
-    function enviarNotificacion() {
-        const titulo = document.getElementById('notifTitle').value.trim();
-        const mensaje = document.getElementById('notifMessage').value.trim();
-        if(!mensaje) return alert("Ingresa el mensaje de la notificación.");
-
-        db.collection("notificaciones").add({
-            titulo: titulo || '📢 AVISO',
-            mensaje: mensaje,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            alert("📢 Aviso publicado.");
-            document.getElementById('notifTitle').value = '';
-            document.getElementById('notifMessage').value = '';
-        }).catch(err => alert("Error al enviar aviso: " + err.message));
-    }
-
-    // LISTENER DE NOTIFICACIONES (SEGURO)
-    db.collection("notificaciones").onSnapshot((snapshot) => {
-        const list = document.getElementById('adminNotifList');
-        if(!list) return;
-        list.innerHTML = '';
-
-        if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay avisos enviados.</p>';
-            return;
-        }
-
-        let docs = [];
-        snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-
-        docs.forEach((n) => {
-            const id = n.id;
-            const titulo = n.titulo || '📢 AVISO';
-            const mensaje = n.mensaje || '';
-
-            list.innerHTML += `
-                <div class="item-list">
-                    <b>${titulo}</b><br>
-                    <span style="color:#ccc;">${mensaje}</span>
-                    <div class="btn-group">
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="eliminarNotificacion('${id}')">🗑️ Eliminar Aviso</button>
-                    </div>
-                </div>
-            `;
         });
-    }, (error) => {
-        console.error("Error escuchando notificaciones:", error);
-        document.getElementById('adminNotifList').innerHTML = '<p style="font-size:11px; color:red;">Error al cargar avisos.</p>';
-    });
-
-    function eliminarNotificacion(id) {
-        if(!id) return;
-        if(confirm("¿Seguro que deseas eliminar esta notificación?")) {
-            db.collection("notificaciones").doc(id).delete()
-            .then(() => alert("Aviso eliminado correctamente."))
-            .catch(err => alert("Error al borrar: " + err.message));
-        }
     }
 
-    // --- LISTENER DE PRONÓSTICOS Y ESTADÍSTICAS POR MOMIO ---
+    // LISTENER DE PRONÓSTICOS MODO ACORDEÓN
     db.collection("pronosticos").onSnapshot((snapshot) => {
-        const list = document.getElementById('adminPostsList');
-        const momiosArea = document.getElementById('adminMomiosStats');
-        
-        if(!list || !momiosArea) return;
-        list.innerHTML = '';
-        momiosArea.innerHTML = '';
+        const accordion = document.getElementById('adminAccordionList');
+        if(!accordion) return;
+        accordion.innerHTML = '';
+        if(snapshot.empty) return accordion.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos.</p>';
 
-        if(snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
-            momiosArea.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos aún.</p>';
-            return;
-        }
-
-        let momioStats = {};
-
+        let deportes = {};
         snapshot.forEach((doc) => {
-            const id = doc.id;
-            const p = doc.data() || {};
-            
-            const estatus = p.estatus || 'pendiente';
-            const tipo = p.tipo || 'DIRECTA';
-            const cuota = p.cuota || 'GENERAL';
-            const categoria = p.categoria || 'VARIOS';
-            const titulo = p.titulo || 'Sin Título';
-
-            let badgeClass = 'status-pending';
-            if(estatus === 'win') badgeClass = 'status-win';
-            if(estatus === 'lose') badgeClass = 'status-lose';
-
-            // Agrupar por Momio / Cuota para métricas
-            if(!momioStats[cuota]) momioStats[cuota] = { wins: 0, loses: 0 };
-            if(estatus === 'win') momioStats[cuota].wins++;
-            if(estatus === 'lose') momioStats[cuota].loses++;
-
-            list.innerHTML += `
-                <div class="item-list">
-                    <span class="tag-status ${badgeClass}">${estatus}</span>
-                    <span class="type-badge">${tipo}</span>
-                    <span class="cuota-badge">${cuota}</span><br>
-                    <b>[${categoria}]</b> ${titulo}
-                    <div class="btn-group">
-                        <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
-                        <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
-                        <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
-                    </div>
-                </div>
-            `;
+            const p = doc.data();
+            const dep = p.categoria || 'VARIOS';
+            if(!deportes[dep]) deportes[dep] = { items: [], momios: {} };
+            deportes[dep].items.push({ id: doc.id, ...p });
+            const m = p.cuota || 'GENERAL';
+            if(!deportes[dep].momios[m]) deportes[dep].momios[m] = { wins: 0, loses: 0 };
+            if(p.estatus === 'win') deportes[dep].momios[m].wins++;
+            if(p.estatus === 'lose') deportes[dep].momios[m].loses++;
         });
 
-        // Mostrar estadísticas de Momios/Cuotas
-        Object.keys(momioStats).forEach(m => {
-            const w = momioStats[m].wins;
-            const l = momioStats[m].loses;
-            const total = w + l;
-            const efec = total > 0 ? ((w / total) * 100).toFixed(0) : 0;
-
-            momiosArea.innerHTML += `
-                <div style="background:#181818; padding:8px 10px; border-radius:6px; margin-bottom:6px; display:flex; justify-content:space-between; font-size:11px; border:1px solid #333;">
-                    <span>Momio/Cuota: <b style="color:var(--gold);">${m}</b></span>
-                    <span><b style="color:#4caf50;">${w}W</b> - <b style="color:#f44336;">${l}L</b> | <b style="color:var(--gold);">${efec}% Efectivo</b></span>
-                </div>
-            `;
+        Object.keys(deportes).forEach((dep) => {
+            const grupo = deportes[dep];
+            let itemsHtml = '', momiosHtml = '';
+            Object.keys(grupo.momios).forEach((m) => {
+                const w = grupo.momios[m].wins, l = grupo.momios[m].loses, efec = (w+l) > 0 ? ((w/(w+l))*100).toFixed(0) : 0;
+                momiosHtml += `<div>• <b>${m}</b>: ${w}W-${l}L (${efec}%)</div>`;
+            });
+            grupo.items.forEach((p) => {
+                const badge = p.estatus === 'win' ? 'status-win' : (p.estatus === 'lose' ? 'status-lose' : 'status-pending');
+                itemsHtml += `<div class="item-list"><span class="tag-status ${badge}">${p.estatus}</span><b>${p.titulo}</b><div class="btn-group"><button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">WIN</button><button class="btn-sm" style="background:#b71c1c" onclick="cambiarEstatus('${p.id}', 'lose')">LOSE</button><button class="btn-sm" style="background:#444" onclick="eliminarPronostico('${p.id}')">🗑️</button></div></div>`;
+            });
+            accordion.innerHTML += `<details><summary>${dep} (${grupo.items.length})</summary><div class="accordion-content"><div class="stats-box">${momiosHtml}</div>${itemsHtml}</div></details>`;
         });
-    }, (error) => {
-        console.error("Error escuchando pronósticos:", error);
-        document.getElementById('adminPostsList').innerHTML = '<p style="font-size:11px; color:red;">Error al cargar pronósticos.</p>';
     });
 
-    function cambiarEstatus(id, nuevoEstatus) {
-        if(!id) return;
-        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus })
-        .catch(err => alert("Error al cambiar estatus: " + err.message));
-    }
+    function cambiarEstatus(id, status) { db.collection("pronosticos").doc(id).update({ estatus: status }); }
+    function eliminarPronostico(id) { if(confirm("¿Eliminar?")) db.collection("pronosticos").doc(id).delete(); }
 
-    function eliminarPronostico(id) {
-        if(!id) return;
-        if(confirm("¿Seguro de eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete()
-            .then(() => alert("🗑️ Pronóstico eliminado."))
-            .catch(err => alert("Error al eliminar: " + err.message));
-        }
-    }
-
-    // --- GESTIÓN DE CLAVES VIP ---
+    // CLAVES VIP
     function guardarClave() {
         const cliente = document.getElementById('clientName').value.trim();
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
-        if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
-
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: firebase.firestore.FieldValue.serverTimestamp() })
-        .then(() => {
-            alert(`✔ Clave ${clave} creada y activada.`);
-            document.getElementById('clientName').value = '';
-            document.getElementById('clientKey').value = '';
-        }).catch(err => alert("Error al guardar clave: " + err.message));
+        if(!cliente || !clave) return alert("Completa los datos.");
+        db.collection("claves").doc(clave).set({ cliente, activa: true, fecha: firebase.firestore.FieldValue.serverTimestamp() })
+        .then(() => alert("✔ Clave activada."));
     }
 
     db.collection("claves").onSnapshot((snapshot) => {
-        const userList = document.getElementById('adminUsersList');
-        if(!userList) return;
-        userList.innerHTML = '';
-
-        if(snapshot.empty) {
-            userList.innerHTML = '<p style="font-size:11px; color:#777;">No hay claves registradas.</p>';
-            return;
-        }
-
+        const list = document.getElementById('adminUsersList');
+        list.innerHTML = '';
         snapshot.forEach((doc) => {
-            const keyId = doc.id;
-            const u = doc.data() || {};
-
-            userList.innerHTML += `
-                <div class="item-list">
-                    <b>Cliente:</b> ${u.cliente || 'Sin Nombre'} | <b>Clave:</b> <span style="color:var(--gold);">${keyId}</span><br>
-                    <b>Estado:</b> <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'ACTIVO (VIP)' : 'INACTIVO'}</span>
-                    <div class="btn-group">
-                        <button class="btn-sm ${u.activa ? 'btn-orange' : 'btn-green'}" onclick="alternarAcceso('${keyId}', ${!u.activa})">
-                            ${u.activa ? '🚫 Quitar Acceso' : '✔ Dar Acceso'}
-                        </button>
-                        <button class="btn-sm" style="background:#444;" onclick="eliminarClave('${keyId}')">🗑️</button>
-                    </div>
-                </div>
-            `;
+            list.innerHTML += `<div class="item-list"><b>${doc.data().cliente}</b> | Clave: ${doc.id} <button class="btn-sm" style="background:#444; float:right" onclick="eliminarClave('${doc.id}')">🗑️</button></div>`;
         });
-    }, (error) => {
-        console.error("Error escuchando claves:", error);
     });
-
-    function alternarAcceso(clave, nuevoEstado) {
-        if(!clave) return;
-        db.collection("claves").doc(clave).update({ activa: nuevoEstado })
-        .catch(err => alert("Error al modificar clave: " + err.message));
-    }
-
-    function eliminarClave(clave) {
-        if(!clave) return;
-        if(confirm(`¿Seguro que deseas eliminar la clave ${clave}?`)) {
-            db.collection("claves").doc(clave).delete()
-            .then(() => alert("Clave eliminada."))
-            .catch(err => alert("Error al borrar clave: " + err.message));
-        }
-    }
+    function eliminarClave(clave) { if(confirm("¿Eliminar clave?")) db.collection("claves").doc(clave).delete(); }
 </script>
 </body>
 </html>
