@@ -64,6 +64,9 @@
     <!-- BOTÓN DE NOTIFICACIONES PUSH -->
     <button id="btnNotif" class="btn-notif" onclick="solicitarPermisoNotificaciones()">🔔 Activar Alertas de Jugadas</button>
 
+    <!-- ÁREA DE NOTIFICACIONES / AVISOS EN VIVO -->
+    <div id="notifUserList"></div>
+
     <!-- ESTADÍSTICAS GENERALES -->
     <div class="stats-box">
         <div class="stat-item">Efectividad General<span id="rateVal" class="stat-val" style="color:var(--gold);">0%</span></div>
@@ -165,6 +168,36 @@
             alert(`🔔 ALERTA: ${payload.notification.title}\n${payload.notification.body}`);
         });
     }
+
+    // ESCUCHAR Y MOSTRAR NOTIFICACIONES/AVISOS EN VIVO
+    db.collection("notificaciones").onSnapshot((snapshot) => {
+        const contenedor = document.getElementById('notifUserList');
+        if (!contenedor) return;
+
+        contenedor.innerHTML = '';
+
+        if (snapshot.empty) return;
+
+        let avisos = [];
+        snapshot.forEach((doc) => {
+            avisos.push({ id: doc.id, ...doc.data() });
+        });
+
+        avisos.sort((a, b) => {
+            let tA = a.fecha && a.fecha.seconds ? a.fecha.seconds : 0;
+            let tB = b.fecha && b.fecha.seconds ? b.fecha.seconds : 0;
+            return tB - tA;
+        });
+
+        avisos.slice(0, 3).forEach((a) => {
+            contenedor.innerHTML += `
+                <div style="background: #252525; border-left: 4px solid var(--gold); padding: 12px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                    <strong style="color: var(--gold); font-size: 13px; display: block; margin-bottom: 4px;">${a.titulo || '📢 AVISO'}</strong>
+                    <p style="color: #ffffff; font-size: 12px; margin: 0; white-space: pre-line;">${a.mensaje || ''}</p>
+                </div>
+            `;
+        });
+    });
 
     db.collection("configuracion").doc("general").onSnapshot((doc) => {
         if(doc.exists) {
