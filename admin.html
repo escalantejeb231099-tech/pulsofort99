@@ -27,6 +27,9 @@
         .status-lose { background: #b71c1c; color: #fff; }
         .status-pending { background: #ff9800; color: #000; }
         .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        
+        .stat-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid #333; }
+        .stat-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -42,29 +45,46 @@
         
         <label>Deporte / Categoría:</label>
         <select id="postCat">
-            <option value="CARRERAS DE CABALLOS">🐎 CARRERAS DE CABALLOS</option>
+            <option value="HIPISMO">🐎 CARRERAS DE CABALLOS</option>
             <option value="MLB">⚾ MLB</option>
             <option value="NBA">🏀 NBA</option>
             <option value="NFL">🏈 NFL</option>
             <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
         
-        <label>Tipo de Jugada:</label>
+        <label>Tipo de Jugada / Logro:</label>
         <select id="postType">
-            <option value="DIRECTA">DIRECTA</option>
-            <option value="COMBINADA">COMBINADA (PARLAY)</option>
+            <option value="DIRECTA">🎯 DIRECTA</option>
+            <option value="PARLAY">🔥 COMBINADA (PARLAY)</option>
+            <option value="HEMBRA">💥 HEMBRA (+LOGRO)</option>
+            <option value="SUPERFIJO">⭐ DATO SUPERFIJO</option>
+            <option value="ALTA/BAJA">📈 ALTA / BAJA</option>
+            <option value="RUNLINE">⚾ RUNLINE / SPREAD</option>
         </select>
 
         <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
+        <input type="text" id="postTitle" placeholder="Ej: Dodgers (-150) vs Yankees / 5ta Válida La Rinconada">
         
         <label>Detalles del Pronóstico:</label>
-        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
+        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada, logro y cuota..."></textarea>
+
+        <label style="font-size: 11px; display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--gold);">
+            <input type="checkbox" id="pushNotif" checked style="width: auto; margin: 0;"> 🔔 Enviar Notificación Push
+        </label>
         
         <button onclick="publicarPronostico()">Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. GESTIONAR PRONÓSTICOS -->
+    <!-- 2. ESTADÍSTICAS Y RENDIMIENTO DE LOGROS POR DEPORTE -->
+    <div class="card">
+        <h3>📈 Rendimiento de Logros y Jugadas Aceptadas</h3>
+        <p style="font-size:10px; color:#aaa; margin-bottom:8px;">Aciertos (WIN) desglosados por tipo de jugada y disciplina:</p>
+        <div id="logrosStatsList">
+            <p style="font-size:11px; color:#777;">Calculando estadísticas...</p>
+        </div>
+    </div>
+
+    <!-- 3. GESTIONAR PRONÓSTICOS -->
     <div class="card">
         <h3>📊 Gestionar Pronósticos Publicados</h3>
         <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Marca como WIN o LOSE para recalcular el % en la App, o bórralos.</p>
@@ -73,7 +93,7 @@
         </div>
     </div>
 
-    <!-- 3. ACTIVAR Y CONTROLAR USUARIOS VIP -->
+    <!-- 4. ACTIVAR Y CONTROLAR USUARIOS VIP -->
     <div class="card">
         <h3>🔑 Gestión de Claves y Acceso VIP</h3>
         <input type="text" id="clientName" placeholder="Nombre del Cliente">
@@ -86,7 +106,7 @@
         </div>
     </div>
 
-    <!-- 4. CONFIGURACIONES GENERALES -->
+    <!-- 5. CONFIGURACIONES GENERALES -->
     <div class="card">
         <h3>🖼️ Configurar Logo y WhatsApp</h3>
         <label>URL del Logo:</label>
@@ -96,7 +116,7 @@
         <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
     </div>
 
-    <!-- 5. CONFIGURAR MÉTODOS DE PAGO -->
+    <!-- 6. CONFIGURAR MÉTODOS DE PAGO -->
     <div class="card">
         <h3>💳 Configurar Métodos de Pago</h3>
         <label>Pago Móvil:</label>
@@ -146,6 +166,8 @@
         const tipo = document.getElementById('postType').value;
         const titulo = document.getElementById('postTitle').value.trim();
         const detalles = document.getElementById('postDetails').value.trim();
+        const conNotif = document.getElementById('pushNotif').checked;
+
         if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
         db.collection("pronosticos").add({
@@ -156,6 +178,13 @@
             estatus: "pendiente",
             fecha: new Date()
         }).then(() => {
+            if(conNotif) {
+                db.collection("notificaciones_pendientes").add({
+                    titulo: `⚡ Nuevo Pronóstico [${cat}]`,
+                    mensaje: `${titulo} (${tipo})`,
+                    fecha: new Date()
+                });
+            }
             alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postDetails').value = '';
@@ -164,12 +193,18 @@
 
     db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
         const list = document.getElementById('adminPostsList');
+        const statsList = document.getElementById('logrosStatsList');
+        
         list.innerHTML = '';
+        statsList.innerHTML = '';
 
         if(snapshot.empty) {
             list.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
+            statsList.innerHTML = '<p style="font-size:11px; color:#777;">Sin datos registrados aún.</p>';
             return;
         }
+
+        let conteoLogros = {};
 
         snapshot.forEach((doc) => {
             const id = doc.id;
@@ -178,17 +213,44 @@
             if(p.estatus === 'win') badgeClass = 'status-win';
             if(p.estatus === 'lose') badgeClass = 'status-lose';
 
+            // Mapeo de Estadísticas por Deporte y Tipo de Logro
+            const claveDeporteTipo = `${p.categoria} | ${p.tipo || 'DIRECTA'}`;
+            if(!conteoLogros[claveDeporteTipo]) {
+                conteoLogros[claveDeporteTipo] = { win: 0, lose: 0, total: 0 };
+            }
+            conteoLogros[claveDeporteTipo].total++;
+            if(p.estatus === 'win') conteoLogros[claveDeporteTipo].win++;
+            if(p.estatus === 'lose') conteoLogros[claveDeporteTipo].lose++;
+
+            // Mapeo en lista con tipo de jugada visible y detalles
             list.innerHTML += `
                 <div class="item-list">
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span><br>
-                    <b>[${p.categoria}]</b> ${p.titulo}
+                    <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
+                    <span style="font-size:10px; color:var(--gold); font-weight:bold; margin-left:5px;">[${p.categoria}]</span><br>
+                    <b style="font-size:13px; color:#fff;">${p.titulo}</b>
+                    <p style="color:#ccc; font-size:11px; margin:4px 0; white-space: pre-line;">${p.detalles}</p>
                     <div class="btn-group">
                         <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
                         <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${id}', 'lose')">🔴 LOSE</button>
                         <button class="btn-sm btn-orange" onclick="cambiarEstatus('${id}', 'pendiente')">⏳ PENDIENTE</button>
                         <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${id}')">🗑️ Borrar</button>
                     </div>
+                </div>
+            `;
+        });
+
+        // Renderizar Cuadro de Rendimiento por Logros
+        Object.keys(conteoLogros).forEach((key) => {
+            const item = conteoLogros[key];
+            const efec = item.win + item.lose > 0 ? ((item.win / (item.win + item.lose)) * 100).toFixed(0) : 0;
+            statsList.innerHTML += `
+                <div class="stat-row">
+                    <span style="color:#ddd; font-weight:600;">${key}</span>
+                    <span>
+                        <b style="color:#4caf50;">${item.win}W</b> - <b style="color:#f44336;">${item.lose}L</b> 
+                        <b style="color:var(--gold); margin-left:5px;">(${efec}%)</b>
+                    </span>
                 </div>
             `;
         });
