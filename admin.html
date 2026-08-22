@@ -20,14 +20,12 @@
         .btn-orange { background: #e65100; }
         .btn-blue { background: #1976d2; }
         
-        /* BOTONES DE DEPORTES CON INTERFAZ DESPLEGABLE */
         .sport-accordion { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
         .sport-header-btn { width: 100%; background: #222; color: var(--gold); padding: 12px; font-weight: 800; font-size: 12px; text-align: left; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 0; margin: 0; }
         .sport-header-btn:hover { background: #2d2d2d; }
         .sport-content { display: none; padding: 10px; background: #181818; }
         .sport-content.open { display: block; }
 
-        /* CARRUSEL HORIZONTAL DE ESTADÍSTICAS DE CUOTAS / MOMIOS */
         .logros-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: thin; }
         .logro-chip { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 6px 10px; white-space: nowrap; font-size: 10px; flex-shrink: 0; }
         .logro-name { font-weight: bold; color: #fff; }
@@ -105,7 +103,7 @@
         </div>
     </div>
 
-    <!-- 4. ARCHIVO HISTÓRICO POR DEPORTE (ACORDEÓN OCULTO/DESPLEGABLE) -->
+    <!-- 4. ARCHIVO HISTÓRICO POR DEPORTE -->
     <div class="card">
         <h3>📂 Archivo Histórico por Deporte</h3>
         <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en un deporte para desplegar las cuotas/momios y sus juegos.</p>
@@ -145,13 +143,32 @@
 
 <script src="firebase-config.js"></script>
 <script>
+    // HELPER SEGURO PARA EXTRAER FECHA
+    function obtenerTiempoMillis(fechaCampo) {
+        if (!fechaCampo) return new Date().getTime();
+        try {
+            if (typeof fechaCampo.toDate === 'function') {
+                return fechaCampo.toDate().getTime();
+            }
+            if (fechaCampo.seconds) {
+                return fechaCampo.seconds * 1000;
+            }
+            if (typeof fechaCampo === 'string' || typeof fechaCampo === 'number') {
+                return new Date(fechaCampo).getTime();
+            }
+        } catch (e) {
+            console.warn("Error procesando fecha:", e);
+        }
+        return new Date().getTime();
+    }
+
     // CARGAR CONFIGURACIONES
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
             document.getElementById('wsNum').value = doc.data().whatsapp || '';
         }
-    }).catch(err => console.log("Config general err:", err));
+    }).catch(err => console.log("Config general error:", err));
 
     db.collection("configuracion").doc("pagos").get().then((doc) => {
         if(doc.exists) {
@@ -159,7 +176,7 @@
             document.getElementById('binanceData').value = doc.data().binance || '';
             document.getElementById('otrosData').value = doc.data().otros || '';
         }
-    }).catch(err => console.log("Config pagos err:", err));
+    }).catch(err => console.log("Config pagos error:", err));
 
     function guardarConfigGeneral() {
         db.collection("configuracion").doc("general").set({
@@ -204,13 +221,13 @@
             const n = doc.data();
             list.innerHTML += `
                 <div class="item-list" style="border-left-color: #1976d2;">
-                    <b>${n.titulo}</b><br>
-                    <span style="color:#ccc; font-size:11px;">${n.mensaje}</span>
+                    <b>${n.titulo || 'Aviso'}</b><br>
+                    <span style="color:#ccc; font-size:11px;">${n.mensaje || ''}</span>
                     <button class="btn-sm" style="background:#444; margin-top:5px;" onclick="eliminarNotificacion('${doc.id}')">🗑️ Eliminar</button>
                 </div>
             `;
         });
-    }, (error) => console.log("Notif error:", error));
+    }, (error) => console.log("Notificaciones Listener Error:", error));
 
     function eliminarNotificacion(id) {
         if(confirm("¿Eliminar esta notificación?")) {
@@ -242,14 +259,14 @@
             estatus: "pendiente",
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            alert("🚀 Pronóstico publicado con éxito.");
+            alert("🚀 Pronóstico publicado.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postLogro').value = '';
             document.getElementById('postDetails').value = '';
         }).catch(e => alert("Error al publicar: " + e.message));
     }
 
-    // LECTURA DIRECTA SIN BLOQUEO DE ORDEN
+    // LISTENER BLINDADO SIN BLOQUEO DE ERRORES
     db.collection("pronosticos").onSnapshot((snapshot) => {
         const active24hList = document.getElementById('active24hList');
         const accordionContainer = document.getElementById('sportsAccordionContainer');
@@ -266,24 +283,22 @@
         const ahora = new Date().getTime();
         const limite24h = 24 * 60 * 60 * 1000;
 
-        let totalActivos = 0;
-        let deportesMap = {};
         let itemsArray = [];
-
         snapshot.forEach((doc) => {
             itemsArray.push({ id: doc.id, ...doc.data() });
         });
 
-        // ORDENAR LOCALMENTE POR FECHA DESDE EL MÁS RECIENTE
+        // Ordenamiento seguro en memoria local
         itemsArray.sort((a, b) => {
-            const fA = a.fecha && a.fecha.toDate ? a.fecha.toDate().getTime() : ahora;
-            const fB = b.fecha && b.fecha.toDate ? b.fecha.toDate().getTime() : ahora;
-            return fB - fA;
+            return obtenerTiempoMillis(b.fecha) - obtenerTiempoMillis(a.fecha);
         });
+
+        let totalActivos = 0;
+        let deportesMap = {};
 
         itemsArray.forEach((p) => {
             const id = p.id;
-            const fechaPost = p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : ahora;
+            const fechaPost = obtenerTiempoMillis(p.fecha);
             const esReciente = (ahora - fechaPost) <= limite24h;
             const deporte = p.categoria || "VARIOS";
 
@@ -302,7 +317,7 @@
                     <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
                     <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
                     <span style="background:#333; color:var(--gold); font-size:9px; font-weight:bold; padding:2px 5px; border-radius:4px; margin-left:4px;">Cuota/Momio: ${logroTag}</span><br>
-                    <b>[${p.categoria}]</b> ${p.titulo}<br>
+                    <b>[${p.categoria || 'VARIOS'}]</b> ${p.titulo || 'Sin Título'}<br>
                     ${p.detalles ? `<span style="color:#aaa; font-size:11px;">${p.detalles}</span>` : ''}
                     <div class="btn-group">
                         <button class="btn-sm btn-green" onclick="cambiarEstatus('${id}', 'win')">🟢 WIN</button>
@@ -343,7 +358,6 @@
 
         for(const dep in deportesMap) {
             const depData = deportesMap[dep];
-            
             let logrosHTML = '<div class="logros-row">';
             let tieneMetricas = false;
 
@@ -385,15 +399,13 @@
             `;
         }
     }, (error) => {
-        console.error("Error al cargar pronósticos:", error);
-        document.getElementById('active24hList').innerHTML = '<p style="color:red; font-size:11px;">Error al conectar con la base de datos.</p>';
+        console.error("Error Firestore:", error);
+        document.getElementById('active24hList').innerHTML = `<p style="color:#ff5252; font-size:11px;">Error de lectura: ${error.message}</p>`;
     });
 
     function toggleDeporte(slug) {
         const target = document.getElementById(`content_${slug}`);
-        if(target) {
-            target.classList.toggle('open');
-        }
+        if(target) target.classList.toggle('open');
     }
 
     function cambiarEstatus(id, nuevoEstatus) {
@@ -411,12 +423,4 @@
         const clave = document.getElementById('clientKey').value.trim().toUpperCase();
         if(!cliente || !clave) return alert("Completa los datos.");
 
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
-        .then(() => {
-            alert(`✔ Clave ${clave} activada.`);
-            document.getElementById('clientName').value = '';
-            document.getElementById('clientKey').value = '';
-        });
-    }
-
-    db.collection("claves").onSnapshot((sna
+        db.col
