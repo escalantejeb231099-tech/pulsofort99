@@ -3,432 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PulsoFort99 - Admin Panel</title>
+    <title>PulsoFort99 - Panel de Administración</title>
+    
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/pVsx2bBr/IMG-20250608-151525.jpg">
+    <link rel="icon" href="https://i.postimg.cc/pVsx2bBr/IMG-20250608-151525.jpg" type="image/jpeg">
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <style>
-        :root { --red: #d32f2f; --green: #2e7d32; --gold: #ffc107; --dark: #121212; --card: #1e1e1e; }
-        body { background: var(--dark); color: #fff; font-family: 'Poppins', sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
+        :root { --red: #d32f2f; --dark: #121212; --card: #1e1e1e; --gold: #ffc107; --green: #2e7d32; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: var(--dark); color: #fff; padding: 15px; padding-bottom: 40px; }
         .container { max-width: 480px; margin: 0 auto; }
+        .header { text-align: center; padding: 15px 0 10px; border-bottom: 2px solid var(--red); margin-bottom: 15px; }
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; border: 1px solid #333; }
-        h3 { font-size: 14px; color: var(--gold); margin-bottom: 10px; }
-        label { font-size: 11px; color: #ccc; }
-        input, textarea, select, button { width: 100%; padding: 10px; margin: 4px 0 10px 0; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 12px; box-sizing: border-box; }
-        button { background: var(--red); color: white; font-weight: bold; border: none; cursor: pointer; padding: 12px; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #444; font-size: 13px; background: #2a2a2a; color: #fff; }
+        textarea { resize: vertical; min-height: 80px; }
+        button { background: var(--red); color: #fff; font-weight: bold; cursor: pointer; border: none; }
         .btn-green { background: var(--green); }
-        .btn-orange { background: #e65100; }
         .btn-gold { background: var(--gold); color: #000; }
-        
-        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 6px 0 10px 0; cursor: pointer; }
-        .checkbox-label input { width: auto; margin: 0; }
+        .btn-danger { background: #b71c1c; }
 
-        .item-list { background: #262626; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--gold); font-size: 12px; }
-        .btn-group { display: flex; gap: 5px; margin-top: 8px; }
-        .btn-sm { padding: 6px 10px; font-size: 10px; width: auto; flex: 1; margin: 0; }
-        .tag-status { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
-        .status-win { background: var(--green); color: #fff; }
-        .status-lose { background: #b71c1c; color: #fff; }
-        .status-pending { background: #ff9800; color: #000; }
-        .type-badge { background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        .tag { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; }
+        .type-tag { background: #333; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; margin-left: 5px; }
+        .cuota-tag { background: #1a237e; color: #90caf9; border: 1px solid #3949ab; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; margin-left: 5px; }
+        .status-badge { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; float: right; text-transform: uppercase; }
+        .bg-win { background: var(--green); color: #fff; }
+        .bg-lose { background: #b71c1c; color: #fff; }
+        .bg-pending { background: #ff9800; color: #000; }
 
-        /* ESTILOS ACORDEÓN */
-        .accordion-item { background: #181818; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
-        .accordion-header { padding: 10px 12px; background: #242424; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--gold); }
-        .accordion-content { display: none; padding: 10px; background: #1a1a1a; }
-        .accordion-content.open { display: block; }
-        .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 6px 0; border-bottom: 1px solid #282828; }
-        .stat-row:last-child { border-bottom: none; }
-        
-        .notif-item { display: flex; justify-content: space-between; align-items: center; background: #262626; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid var(--red); font-size: 11px; }
+        .item-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .item-actions button { padding: 8px; font-size: 11px; margin-top: 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="background:var(--red); color:white; text-align:center; padding:12px; border-radius:8px; margin-bottom:15px;">
-        <h3 style="color:white; margin:0; font-weight:800;">⚙️ PANEL DE CONTROL PULSOFORT99</h3>
+    <div class="header">
+        <h2 style="font-weight:800;">⚙️ ADMIN <span style="color:var(--red);">PULSOFORT99</span></h2>
+        <p style="font-size:11px; color:#aaa;">Panel de Publicación y Control de Pronósticos</p>
     </div>
 
-    <!-- 1. PUBLICAR PRONÓSTICO CON CASILLA DE NOTIFICACIÓN -->
+    <!-- PUBLICAR PRONÓSTICO -->
     <div class="card">
-        <h3>🚀 Publicar Nuevo Pronóstico</h3>
+        <h3 style="font-size:14px; color:var(--gold); margin-bottom:8px;">📌 Crear / Publicar Pronóstico</h3>
         
-        <label>Deporte / Categoría:</label>
-        <select id="postCat">
-            <option value="CARRERAS DE CABALLOS">🐎 CARRERAS DE CABALLOS</option>
+        <label style="font-size:11px; color:#aaa;">Deporte / Disciplina:</label>
+        <select id="pCategoria">
+            <option value="HIPISMO">🐎 HIPISMO</option>
             <option value="MLB">⚾ MLB</option>
             <option value="NBA">🏀 NBA</option>
             <option value="NFL">🏈 NFL</option>
             <option value="FUTBOL">⚽ FÚTBOL</option>
         </select>
-        
-        <label>Tipo de Jugada:</label>
-        <select id="postType">
+
+        <label style="font-size:11px; color:#aaa; margin-top:8px; display:block;">Tipo de Pronóstico:</label>
+        <select id="pTipo">
             <option value="DIRECTA">DIRECTA</option>
-            <option value="COMBINADA">COMBINADA (PARLAY)</option>
+            <option value="PARLAY">PARLAY</option>
+            <option value="HEAVY BET">HEAVY BET</option>
+            <option value="ALTA / BAJA">ALTA / BAJA</option>
+            <option value="DATACE">DATACE / FIJO</option>
         </select>
 
-        <label>Cuota / Momio / Línea:</label>
-        <input type="text" id="postOdds" placeholder="Ej: -120, +110, Altas 8.5">
+        <label style="font-size:11px; color:#aaa; margin-top:8px; display:block;">Cuota / Logro (Ej: -120, +150, Alta 8.5):</label>
+        <input type="text" id="pCuota" placeholder="Ejemplo: -120, Alta 8.5, Runline">
 
-        <label>Título / Partido:</label>
-        <input type="text" id="postTitle" placeholder="Ej: Dodgers vs Yankees / 5ta Válida La Rinconada">
-        
-        <label>Detalles del Pronóstico:</label>
-        <textarea id="postDetails" rows="3" placeholder="Detalles de la jugada..."></textarea>
-        
-        <label class="checkbox-label">
-            <input type="checkbox" id="chkNotif" checked>
-            🔔 Crear aviso/notificación al publicar
-        </label>
+        <label style="font-size:11px; color:#aaa; margin-top:8px; display:block;">Título del Pronóstico:</label>
+        <input type="text" id="pTitulo" placeholder="Ej: Dodgers Moneyline / 5ta La Rinconada">
 
-        <button onclick="publicarPronostico()">Publicar Pronóstico</button>
+        <label style="font-size:11px; color:#aaa; margin-top:8px; display:block;">Detalles del Análisis (VIP):</label>
+        <textarea id="pDetalles" placeholder="Escribe el análisis detallado aquí..."></textarea>
+
+        <button onclick="guardarPronostico()" class="btn-green" style="margin-top:12px;">🚀 Publicar Pronóstico</button>
     </div>
 
-    <!-- 2. ENVIAR Y GESTIONAR AVISOS -->
+    <!-- NOTIFICACIONES EN VIVO / AVISOS -->
     <div class="card">
-        <h3>📢 Enviar y Borrar Avisos (Notificaciones)</h3>
-        <input type="text" id="avisoTitulo" placeholder="Título del aviso">
-        <textarea id="avisoMensaje" rows="2" placeholder="Mensaje para los usuarios..."></textarea>
-        <button class="btn-gold" onclick="publicarAvisoDirecto()">Publicar Aviso Solo</button>
-
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Avisos Activos:</h4>
-        <div id="adminNotifsList">
-            <p style="font-size:11px; color:#777;">Cargando avisos...</p>
-        </div>
+        <h3 style="font-size:14px; color:var(--gold); margin-bottom:8px;">📢 Emitir Aviso en Vivo</h3>
+        <input type="text" id="aTitulo" placeholder="Título del aviso (Ej: 🔥 Alerta de Última Hora)">
+        <textarea id="aMensaje" placeholder="Mensaje para los usuarios..."></textarea>
+        <button onclick="enviarAviso()" class="btn-gold">Enviar Aviso</button>
     </div>
 
-    <!-- 3. ESTADÍSTICAS EN MODO ACORDEÓN POR DEPORTE -->
-    <div class="card">
-        <h3>📊 Efectividad por Cuota (Por Deporte)</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en el deporte para ver el desglose de cuotas.</p>
-        <div id="adminOddsStatsAccordion">
-            <p style="font-size:11px; color:#777;">Calculando efectividad...</p>
-        </div>
-    </div>
-
-    <!-- 4. GESTIONAR PRONÓSTICOS EN ACORDEÓN POR DEPORTE -->
-    <div class="card">
-        <h3>📋 Gestionar Pronósticos Publicados</h3>
-        <p style="font-size:10px; color:#aaa; margin-bottom:10px;">Haz clic en el deporte para desplegar sus jugadas.</p>
-        <div id="adminPostsAccordion">
-            <p style="font-size:11px; color:#777;">Cargando lista...</p>
-        </div>
-    </div>
-
-    <!-- 5. ACTIVAR Y CONTROLAR USUARIOS VIP -->
-    <div class="card">
-        <h3>🔑 Gestión de Claves y Acceso VIP</h3>
-        <input type="text" id="clientName" placeholder="Nombre del Cliente">
-        <input type="text" id="clientKey" placeholder="Clave VIP (Ej: PF-889)">
-        <button class="btn-green" onclick="guardarClave()">Activar Nueva Clave VIP</button>
-
-        <h4 style="font-size:12px; color:var(--gold); margin-top:15px; margin-bottom:8px;">Lista de Claves Activas / Inactivas:</h4>
-        <div id="adminUsersList">
-            <p style="font-size:11px; color:#777;">Cargando usuarios...</p>
-        </div>
-    </div>
-
-    <!-- 6. CONFIGURACIONES GENERALES -->
-    <div class="card">
-        <h3>🖼️ Configurar Logo y WhatsApp</h3>
-        <label>URL del Logo:</label>
-        <input type="text" id="logoUrl" placeholder="https://i.imgur.com/logo.png">
-        <label>Número de WhatsApp:</label>
-        <input type="text" id="wsNum" placeholder="+584121234567">
-        <button onclick="guardarConfigGeneral()">Guardar Logo y Contacto</button>
-    </div>
-
-    <!-- 7. CONFIGURAR MÉTODOS DE PAGO -->
-    <div class="card">
-        <h3>💳 Configurar Métodos de Pago</h3>
-        <label>Pago Móvil:</label>
-        <textarea id="pmData" rows="2" placeholder="Banco, Cédula, Teléfono..."></textarea>
-        <label>Binance Pay:</label>
-        <textarea id="binanceData" rows="2" placeholder="Binance ID / Correo..."></textarea>
-        <label>Otros Métodos:</label>
-        <textarea id="otrosData" rows="2" placeholder="Zelle, Efectivo..."></textarea>
-        <button onclick="guardarConfigPagos()">Guardar Métodos de Pago</button>
+    <!-- LISTADO DE PRONÓSTICOS PUBLICADOS Y CONTROL WIN/LOSE -->
+    <h3 style="font-size:14px; color:#fff; margin-bottom:10px;">📋 Gestor de Pronósticos Activos</h3>
+    <div id="adminPostsList">
+        <p style="font-size:12px; color:#777;">Cargando datos...</p>
     </div>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
-    let todosLosPronosticos = [];
+    function guardarPronostico() {
+        const categoria = document.getElementById('pCategoria').value;
+        const tipo = document.getElementById('pTipo').value;
+        const cuota = document.getElementById('pCuota').value.trim() || 'GENERAL';
+        const titulo = document.getElementById('pTitulo').value.trim();
+        const detalles = document.getElementById('pDetalles').value.trim();
 
-    // CARGAR CONFIGURACIONES
-    db.collection("configuracion").doc("general").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('logoUrl').value = doc.data().logoUrl || '';
-            document.getElementById('wsNum').value = doc.data().whatsapp || '';
+        if(!titulo || !detalles) {
+            return alert("Por favor completa el título y los detalles del pronóstico.");
         }
-    });
-
-    db.collection("configuracion").doc("pagos").get().then((doc) => {
-        if(doc.exists) {
-            document.getElementById('pmData').value = doc.data().pagoMovil || '';
-            document.getElementById('binanceData').value = doc.data().binance || '';
-            document.getElementById('otrosData').value = doc.data().otros || '';
-        }
-    });
-
-    function guardarConfigGeneral() {
-        const logo = document.getElementById('logoUrl').value.trim();
-        const ws = document.getElementById('wsNum').value.trim();
-        db.collection("configuracion").doc("general").set({ logoUrl: logo, whatsapp: ws }, { merge: true })
-        .then(() => alert("✔ Logo y WhatsApp guardados."));
-    }
-
-    function guardarConfigPagos() {
-        const pm = document.getElementById('pmData').value.trim();
-        const binance = document.getElementById('binanceData').value.trim();
-        const otros = document.getElementById('otrosData').value.trim();
-        db.collection("configuracion").doc("pagos").set({ pagoMovil: pm, binance: binance, otros: otros }, { merge: true })
-        .then(() => alert("✔ Métodos de pago guardados."));
-    }
-
-    // FUNCIÓN PARA ENVIAR NOTIFICACIÓN PUSH A TELÉFONOS (CON SONIDO Y PANTALLA)
-    function enviarNotificacionPush(titulo, mensaje) {
-        db.collection("notificaciones").add({
-            titulo: titulo,
-            mensaje: mensaje,
-            fecha: new Date()
-        });
-
-        db.collection("tokens").get().then((snapshot) => {
-            snapshot.forEach((doc) => {
-                const tokenCliente = doc.data().token;
-
-                fetch('https://fcm.googleapis.com/fcm/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'key=TU_CLAVE_SERVIDOR_LEGACY' // Reemplaza por tu Server Key
-                    },
-                    body: JSON.stringify({
-                        to: tokenCliente,
-                        priority: "high",
-                        content_available: true,
-                        notification: {
-                            title: titulo,
-                            body: mensaje,
-                            sound: "default",
-                            android_channel_id: "pulsofort_alerts",
-                            click_action: "FLUTTER_NOTIFICATION_CLICK"
-                        },
-                        android: {
-                            priority: "high",
-                            notification: {
-                                sound: "default",
-                                default_sound: true,
-                                default_vibrate_timings: true,
-                                notification_priority: "PRIORITY_MAX",
-                                visibility: "PUBLIC"
-                            }
-                        }
-                    })
-                }).catch(err => console.log("Error al enviar push:", err));
-            });
-        });
-    }
-
-    // PUBLICAR PRONÓSTICO CON OPCIÓN DE NOTIFICACIÓN
-    function publicarPronostico() {
-        const cat = document.getElementById('postCat').value;
-        const tipo = document.getElementById('postType').value;
-        const cuota = document.getElementById('postOdds').value.trim() || 'N/A';
-        const titulo = document.getElementById('postTitle').value.trim();
-        const detalles = document.getElementById('postDetails').value.trim();
-        const enviarAviso = document.getElementById('chkNotif').checked;
-
-        if(!titulo || !detalles) return alert("Por favor completa el título y los detalles.");
 
         db.collection("pronosticos").add({
-            categoria: cat,
+            categoria: categoria,
             tipo: tipo,
             cuota: cuota,
             titulo: titulo,
             detalles: detalles,
-            estatus: "pendiente",
-            fecha: new Date()
+            estatus: 'pendiente',
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            if(enviarAviso) {
-                enviarNotificacionPush(`⚡ NUEVA JUGADA: ${cat}`, `${titulo} (${tipo}) - Revisa los pronósticos.`);
-            }
-            alert("🚀 Pronóstico publicado con éxito.");
-            document.getElementById('postOdds').value = '';
-            document.getElementById('postTitle').value = '';
-            document.getElementById('postDetails').value = '';
+            alert("✅ Pronóstico publicado con éxito.");
+            document.getElementById('pTitulo').value = '';
+            document.getElementById('pDetalles').value = '';
+            document.getElementById('pCuota').value = '';
+        }).catch(err => {
+            console.error("Error al publicar:", err);
+            alert("❌ Ocurrió un error al guardar.");
         });
     }
 
-    // PUBLICAR AVISO SOLO
-    function publicarAvisoDirecto() {
-        const titulo = document.getElementById('avisoTitulo').value.trim();
-        const mensaje = document.getElementById('avisoMensaje').value.trim();
+    function enviarAviso() {
+        const titulo = document.getElementById('aTitulo').value.trim();
+        const mensaje = document.getElementById('aMensaje').value.trim();
 
-        if(!titulo || !mensaje) return alert("Ingresa el título y mensaje del aviso.");
+        if(!mensaje) return alert("Escribe un mensaje para el aviso.");
 
-        enviarNotificacionPush(titulo, mensaje);
-
-        alert("📢 Aviso publicado y enviado con éxito.");
-        document.getElementById('avisoTitulo').value = '';
-        document.getElementById('avisoMensaje').value = '';
+        db.collection("notificaciones").add({
+            titulo: titulo || '📢 AVISO',
+            mensaje: mensaje,
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("📢 Aviso publicado correctamente.");
+            document.getElementById('aTitulo').value = '';
+            document.getElementById('aMensaje').value = '';
+        });
     }
 
-    // LISTAR Y BORRAR NOTIFICACIONES
-    db.collection("notificaciones").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        const notifList = document.getElementById('adminNotifsList');
-        notifList.innerHTML = '';
+    function cambiarEstatus(id, nuevoEstatus) {
+        db.collection("pronosticos").doc(id).update({
+            estatus: nuevoEstatus
+        });
+    }
+
+    function eliminarPronostico(id) {
+        if(confirm("¿Seguro que deseas eliminar este pronóstico?")) {
+            db.collection("pronosticos").doc(id).delete();
+        }
+    }
+
+    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+        const contenedor = document.getElementById('adminPostsList');
+        contenedor.innerHTML = '';
 
         if(snapshot.empty) {
-            notifList.innerHTML = '<p style="font-size:11px; color:#777;">No hay avisos activos.</p>';
+            contenedor.innerHTML = '<p style="font-size:12px; color:#777; text-align:center;">No hay pronósticos registrados.</p>';
             return;
         }
 
         snapshot.forEach((doc) => {
+            const item = doc.data();
             const id = doc.id;
-            const n = doc.data();
 
-            notifList.innerHTML += `
-                <div class="notif-item">
-                    <div style="padding-right:8px;">
-                        <strong style="color:var(--gold); display:block;">${n.titulo}</strong>
-                        <span style="color:#ccc;">${n.mensaje}</span>
-                    </div>
-                    <button class="btn-sm" style="background:#b71c1c; flex:none; padding:4px 8px;" onclick="eliminarNotificacion('${id}')">🗑️ Borrar</button>
-                </div>
-            `;
-        });
-    });
+            let badgeClass = 'bg-pending';
+            let badgeText = 'PENDIENTE';
+            if(item.estatus === 'win') { badgeClass = 'bg-win'; badgeText = 'WIN 🟢'; }
+            if(item.estatus === 'lose') { badgeClass = 'bg-lose'; badgeText = 'LOSE 🔴'; }
 
-    function eliminarNotificacion(id) {
-        if(confirm("¿Seguro que deseas eliminar esta notificación?")) {
-            db.collection("notificaciones").doc(id).delete();
-        }
-    }
-
-    // CARGA EN TIEMPO REAL
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
-        todosLosPronosticos = [];
-        snapshot.forEach((doc) => {
-            todosLosPronosticos.push({ id: doc.id, ...doc.data() });
-        });
-
-        renderizarPronosticosAcordeon();
-        renderizarEstadisticasAcordeon();
-    });
-
-    // LISTADO DE PRONÓSTICOS EN ACORDEÓN POR DEPORTE
-    function renderizarPronosticosAcordeon() {
-        const container = document.getElementById('adminPostsAccordion');
-        container.innerHTML = '';
-
-        if(todosLosPronosticos.length === 0) {
-            container.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos creados.</p>';
-            return;
-        }
-
-        const agrupados = {};
-        todosLosPronosticos.forEach((p) => {
-            const cat = p.categoria || 'VARIOS';
-            if(!agrupados[cat]) agrupados[cat] = [];
-            agrupados[cat].push(p);
-        });
-
-        Object.keys(agrupados).forEach((cat, index) => {
-            const items = agrupados[cat];
-            let htmlItems = '';
-
-            items.forEach((p) => {
-                let badgeClass = 'status-pending';
-                if(p.estatus === 'win') badgeClass = 'status-win';
-                if(p.estatus === 'lose') badgeClass = 'status-lose';
-
-                htmlItems += `
-                    <div class="item-list">
-                        <span class="tag-status ${badgeClass}">${p.estatus || 'pendiente'}</span>
-                        <span class="type-badge">${p.tipo || 'DIRECTA'}</span>
-                        ${p.cuota ? `<span style="color:var(--gold); font-size:10px; font-weight:bold; margin-left:5px;">[${p.cuota}]</span>` : ''}<br>
-                        <b>[${p.categoria}]</b> ${p.titulo}
-                        <div class="btn-group">
-                            <button class="btn-sm btn-green" onclick="cambiarEstatus('${p.id}', 'win')">🟢 WIN</button>
-                            <button class="btn-sm" style="background:#b71c1c;" onclick="cambiarEstatus('${p.id}', 'lose')">🔴 LOSE</button>
-                            <button class="btn-sm btn-orange" onclick="cambiarEstatus('${p.id}', 'pendiente')">⏳ PENDIENTE</button>
-                            <button class="btn-sm" style="background:#444;" onclick="eliminarPronostico('${p.id}')">🗑️ Borrar</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML += `
-                <div class="accordion-item">
-                    <div class="accordion-header" onclick="toggleAcc('acc-post-${index}')">
-                        <span>${cat} (${items.length})</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="accordion-content" id="acc-post-${index}">
-                        ${htmlItems}
+            contenedor.innerHTML += `
+                <div class="card">
+                    <span class="tag">${item.categoria}</span>
+                    <span class="type-tag">${item.tipo || 'DIRECTA'}</span>
+                    <span class="cuota-tag">${item.cuota || 'GENERAL'}</span>
+                    <span class="status-badge ${badgeClass}">${badgeText}</span>
+                    <h4 style="margin:8px 0 4px; font-size:13px;">${item.titulo}</h4>
+                    <p style="font-size:11px; color:#ccc; white-space: pre-line;">${item.detalles}</p>
+                    
+                    <div class="item-actions">
+                        <button onclick="cambiarEstatus('${id}', 'win')" class="btn-green">🟢 WIN</button>
+                        <button onclick="cambiarEstatus('${id}', 'lose')" class="btn-danger">🔴 LOSE</button>
+                        <button onclick="cambiarEstatus('${id}', 'pendiente')" style="background:#555;">⏳ Reset</button>
+                        <button onclick="eliminarPronostico('${id}')" style="background:#222; color:#f44336; border:1px solid #444;">🗑️</button>
                     </div>
                 </div>
             `;
         });
-    }
-
-    // ESTADÍSTICAS POR CUOTA EN ACORDEÓN POR DEPORTE
-    function renderizarEstadisticasAcordeon() {
-        const area = document.getElementById('adminOddsStatsAccordion');
-        area.innerHTML = '';
-
-        if(todosLosPronosticos.length === 0) {
-            area.innerHTML = '<p style="font-size:11px; color:#777;">No hay datos registrados.</p>';
-            return;
-        }
-
-        const statsDeporte = {};
-
-        todosLosPronosticos.forEach(p => {
-            if(!p.cuota || p.cuota === 'N/A') return;
-            const cat = p.categoria || 'VARIOS';
-            const cuota = p.cuota.toUpperCase().trim();
-
-            if(!statsDeporte[cat]) statsDeporte[cat] = {};
-            if(!statsDeporte[cat][cuota]) statsDeporte[cat][cuota] = { wins: 0, loses: 0 };
-
-            if(p.estatus === 'win') statsDeporte[cat][cuota].wins++;
-            if(p.estatus === 'lose') statsDeporte[cat][cuota].loses++;
-        });
-
-        const deportes = Object.keys(statsDeporte);
-
-        if(deportes.length === 0) {
-            area.innerHTML = '<p style="font-size:11px; color:#777;">No hay cuotas registradas aún.</p>';
-            return;
-        }
-
-        deportes.forEach((dep, index) => {
-            const cuotasObj = statsDeporte[dep];
-            let htmlCuotas = '';
-
-            Object.keys(cuotasObj).forEach(c => {
-                const w = cuotasObj[c].wins;
-                const l = cuotasObj[c].loses;
-                const total = w + l;
-                const efec = total > 0 ? ((w / total) * 100).toFixed(1) : 0;
-
-                htmlCuotas += `
-                    <div class="stat-row">
-                        <span style="color:var(--gold); font-weight:bold;">Cuota ${c}</span>
-                        <span style="color:#aaa;">
-                            <b style="color:#4caf50;">${w}W</b> - <b style="color:#f44336;">${l}L</b> | 
-                            <b style="color:#fff;">${efec}% Acierto</b>
-                        </span>
-                    </div>
-                `;
-            });
-
-            area.innerHTML += `
-                <div class="accordion-item">
-                    <div class="accordion-header" onclick="toggleAcc('acc-stat-${index}')">
-   
+    });
+</script>
+</body>
+</html>
