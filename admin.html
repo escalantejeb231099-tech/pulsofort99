@@ -157,6 +157,7 @@
 <script>
     let todosLosPronosticos = [];
 
+    // CARGAR CONFIGURACIONES
     db.collection("configuracion").doc("general").get().then((doc) => {
         if(doc.exists) {
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
@@ -187,6 +188,51 @@
         .then(() => alert("✔ Métodos de pago guardados."));
     }
 
+    // FUNCIÓN PARA ENVIAR NOTIFICACIÓN PUSH A TELÉFONOS (CON SONIDO Y PANTALLA)
+    function enviarNotificacionPush(titulo, mensaje) {
+        db.collection("notificaciones").add({
+            titulo: titulo,
+            mensaje: mensaje,
+            fecha: new Date()
+        });
+
+        db.collection("tokens").get().then((snapshot) => {
+            snapshot.forEach((doc) => {
+                const tokenCliente = doc.data().token;
+
+                fetch('https://fcm.googleapis.com/fcm/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'key=TU_CLAVE_SERVIDOR_LEGACY' // Reemplaza por tu Server Key
+                    },
+                    body: JSON.stringify({
+                        to: tokenCliente,
+                        priority: "high",
+                        content_available: true,
+                        notification: {
+                            title: titulo,
+                            body: mensaje,
+                            sound: "default",
+                            android_channel_id: "pulsofort_alerts",
+                            click_action: "FLUTTER_NOTIFICATION_CLICK"
+                        },
+                        android: {
+                            priority: "high",
+                            notification: {
+                                sound: "default",
+                                default_sound: true,
+                                default_vibrate_timings: true,
+                                notification_priority: "PRIORITY_MAX",
+                                visibility: "PUBLIC"
+                            }
+                        }
+                    })
+                }).catch(err => console.log("Error al enviar push:", err));
+            });
+        });
+    }
+
     // PUBLICAR PRONÓSTICO CON OPCIÓN DE NOTIFICACIÓN
     function publicarPronostico() {
         const cat = document.getElementById('postCat').value;
@@ -208,11 +254,7 @@
             fecha: new Date()
         }).then(() => {
             if(enviarAviso) {
-                db.collection("notificaciones").add({
-                    titulo: `⚡ NUEVA JUGADA: ${cat}`,
-                    mensaje: `${titulo} (${tipo}) - Revisa los pronósticos.`,
-                    fecha: new Date()
-                });
+                enviarNotificacionPush(`⚡ NUEVA JUGADA: ${cat}`, `${titulo} (${tipo}) - Revisa los pronósticos.`);
             }
             alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postOdds').value = '';
@@ -228,15 +270,11 @@
 
         if(!titulo || !mensaje) return alert("Ingresa el título y mensaje del aviso.");
 
-        db.collection("notificaciones").add({
-            titulo: titulo,
-            mensaje: mensaje,
-            fecha: new Date()
-        }).then(() => {
-            alert("📢 Aviso publicado con éxito.");
-            document.getElementById('avisoTitulo').value = '';
-            document.getElementById('avisoMensaje').value = '';
-        });
+        enviarNotificacionPush(titulo, mensaje);
+
+        alert("📢 Aviso publicado y enviado con éxito.");
+        document.getElementById('avisoTitulo').value = '';
+        document.getElementById('avisoMensaje').value = '';
     }
 
     // LISTAR Y BORRAR NOTIFICACIONES
@@ -393,49 +431,4 @@
             area.innerHTML += `
                 <div class="accordion-item">
                     <div class="accordion-header" onclick="toggleAcc('acc-stat-${index}')">
-                        <span>${dep}</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="accordion-content" id="acc-stat-${index}">
-                        ${htmlCuotas}
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    function toggleAcc(id) {
-        document.getElementById(id).classList.toggle('open');
-    }
-
-    function cambiarEstatus(id, nuevoEstatus) {
-        db.collection("pronosticos").doc(id).update({ estatus: nuevoEstatus });
-    }
-
-    function eliminarPronostico(id) {
-        if(confirm("¿Seguro de eliminar este pronóstico?")) {
-            db.collection("pronosticos").doc(id).delete().then(() => {
-                alert("🗑️ Pronóstico eliminado con éxito.");
-            });
-        }
-    }
-
-    function guardarClave() {
-        const cliente = document.getElementById('clientName').value.trim();
-        const clave = document.getElementById('clientKey').value.trim().toUpperCase();
-        if(!cliente || !clave) return alert("Ingresa el nombre y la clave.");
-
-        db.collection("claves").doc(clave).set({ cliente: cliente, activa: true, fechaRegistro: new Date() })
-        .then(() => {
-            alert(`✔ Clave ${clave} creada y activada.`);
-            document.getElementById('clientName').value = '';
-            document.getElementById('clientKey').value = '';
-        });
-    }
-
-    db.collection("claves").onSnapshot((snapshot) => {
-        const userList = document.getElementById('adminUsersList');
-        userList.innerHTML = '';
-
-        if(snapshot.empty) {
-            userList.innerHTML = '<p style="font-size:11px;
+   
