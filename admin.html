@@ -151,7 +151,7 @@
             document.getElementById('logoUrl').value = doc.data().logoUrl || '';
             document.getElementById('wsNum').value = doc.data().whatsapp || '';
         }
-    });
+    }).catch(err => console.log("Config general err:", err));
 
     db.collection("configuracion").doc("pagos").get().then((doc) => {
         if(doc.exists) {
@@ -159,7 +159,7 @@
             document.getElementById('binanceData').value = doc.data().binance || '';
             document.getElementById('otrosData').value = doc.data().otros || '';
         }
-    });
+    }).catch(err => console.log("Config pagos err:", err));
 
     function guardarConfigGeneral() {
         db.collection("configuracion").doc("general").set({
@@ -176,25 +176,24 @@
         }, { merge: true }).then(() => alert("✔ Métodos guardados con éxito."));
     }
 
-    // ENVIAR Y GESTIONAR NOTIFICACIONES
     function enviarNotificacion() {
         const titulo = document.getElementById('notifTitle').value.trim();
         const mensaje = document.getElementById('notifBody').value.trim();
 
-        if(!titulo || !mensaje) return alert("Por favor escribe el título y mensaje de la notificación.");
+        if(!titulo || !mensaje) return alert("Por favor escribe el título y mensaje.");
 
         db.collection("notificaciones").add({
             titulo: titulo,
             mensaje: mensaje,
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            alert("🔔 Notificación enviada con éxito.");
+            alert("🔔 Notificación enviada.");
             document.getElementById('notifTitle').value = '';
             document.getElementById('notifBody').value = '';
         });
     }
 
-    db.collection("notificaciones").orderBy("fecha", "desc").limit(5).onSnapshot((snapshot) => {
+    db.collection("notificaciones").onSnapshot((snapshot) => {
         const list = document.getElementById('notifHistoryList');
         list.innerHTML = '';
         if(snapshot.empty) {
@@ -211,7 +210,7 @@
                 </div>
             `;
         });
-    });
+    }, (error) => console.log("Notif error:", error));
 
     function eliminarNotificacion(id) {
         if(confirm("¿Eliminar esta notificación?")) {
@@ -243,15 +242,15 @@
             estatus: "pendiente",
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
-            alert("🚀 Pronóstico publicado.");
+            alert("🚀 Pronóstico publicado con éxito.");
             document.getElementById('postTitle').value = '';
             document.getElementById('postLogro').value = '';
             document.getElementById('postDetails').value = '';
-        });
+        }).catch(e => alert("Error al publicar: " + e.message));
     }
 
-    // LISTENER DE PRONÓSTICOS EN TIEMPO REAL
-    db.collection("pronosticos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+    // LECTURA DIRECTA SIN BLOQUEO DE ORDEN
+    db.collection("pronosticos").onSnapshot((snapshot) => {
         const active24hList = document.getElementById('active24hList');
         const accordionContainer = document.getElementById('sportsAccordionContainer');
 
@@ -269,11 +268,22 @@
 
         let totalActivos = 0;
         let deportesMap = {};
+        let itemsArray = [];
 
         snapshot.forEach((doc) => {
-            const id = doc.id;
-            const p = doc.data();
-            const fechaPost = p.fecha ? p.fecha.toDate().getTime() : ahora;
+            itemsArray.push({ id: doc.id, ...doc.data() });
+        });
+
+        // ORDENAR LOCALMENTE POR FECHA DESDE EL MÁS RECIENTE
+        itemsArray.sort((a, b) => {
+            const fA = a.fecha && a.fecha.toDate ? a.fecha.toDate().getTime() : ahora;
+            const fB = b.fecha && b.fecha.toDate ? b.fecha.toDate().getTime() : ahora;
+            return fB - fA;
+        });
+
+        itemsArray.forEach((p) => {
+            const id = p.id;
+            const fechaPost = p.fecha && p.fecha.toDate ? p.fecha.toDate().getTime() : ahora;
             const esReciente = (ahora - fechaPost) <= limite24h;
             const deporte = p.categoria || "VARIOS";
 
@@ -303,13 +313,11 @@
                 </div>
             `;
 
-            // 1. INICIO (MUESTRA SOLO ÚLTIMAS 24 HOURS)
             if(esReciente) {
                 totalActivos++;
                 active24hList.innerHTML += itemHTML;
             }
 
-            // 2. AGRUPAR POR DEPORTE Y POR CUOTA/MOMIO PARA EL ARCHIVO OCULTO
             if(!deportesMap[deporte]) {
                 deportesMap[deporte] = { logros: {}, items: [] };
             }
@@ -333,7 +341,6 @@
             active24hList.innerHTML = '<p style="font-size:11px; color:#777;">No hay pronósticos enviados en las últimas 24 horas.</p>';
         }
 
-        // RENDERIZAR ESTRUCTURA DE ACORDEÓN OCULTA POR DEPORTE
         for(const dep in deportesMap) {
             const depData = deportesMap[dep];
             
@@ -377,6 +384,9 @@
                 </div>
             `;
         }
+    }, (error) => {
+        console.error("Error al cargar pronósticos:", error);
+        document.getElementById('active24hList').innerHTML = '<p style="color:red; font-size:11px;">Error al conectar con la base de datos.</p>';
     });
 
     function toggleDeporte(slug) {
@@ -409,14 +419,4 @@
         });
     }
 
-    db.collection("claves").onSnapshot((snapshot) => {
-        const userList = document.getElementById('adminUsersList');
-        userList.innerHTML = '';
-        snapshot.forEach((doc) => {
-            const u = doc.data();
-            userList.innerHTML += `
-                <div class="item-list">
-                    <b>${u.cliente}</b> (${doc.id}) - 
-                    <span style="color:${u.activa ? '#4caf50' : '#f44336'};">${u.activa ? 'VIP ACTIVO' : 'INACTIVO'}</span>
-                    <div class="btn-group">
-                        <button class="btn-sm ${u.activa ? 'btn-
+    db.collection("claves").onSnapshot((sna
